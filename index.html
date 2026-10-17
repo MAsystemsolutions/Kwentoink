@@ -193,6 +193,26 @@ h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
 .pinbox input{width:58px;height:66px;border-radius:18px;border:3px solid var(--white);background:var(--white);text-align:center;font-size:30px;font-weight:900;box-shadow:var(--shadow);outline:0}
 .pinbox input:focus{border-color:#9cc5ee}
 
+/* ---- tools, calculator, invoice ---- */
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px;margin:0 0 12px}
+.tools button{background:var(--white);border-radius:18px;padding:10px 4px;font-weight:800;font-size:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:2px}
+.tools .e{font-size:24px}
+.hello{cursor:pointer}
+.calcd{background:var(--navy);color:#fff;border-radius:20px;padding:14px 16px;text-align:right;margin-bottom:12px}
+.calcd .ce{font-size:16px;opacity:.75;min-height:20px;word-break:break-all}
+.calcd .cv{font-size:38px;font-weight:900;word-break:break-all}
+.calck{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.calck button{height:60px;border-radius:18px;background:var(--white);font-size:24px;font-weight:900;box-shadow:var(--shadow)}
+.calck button.op{background:var(--sky2);color:var(--navy2)} .calck button.fn{background:#fff3cd} .calck button.eq{background:var(--pink);color:#fff}
+.calck button:active{transform:scale(.95)}
+.ivrow{display:grid;grid-template-columns:1fr 64px 92px auto;gap:6px;margin-bottom:6px}
+.ivrow .inp{padding:11px 10px}
+.invoice{background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.ivh{display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--navy);padding-bottom:10px}
+.ivh img{width:44px;height:44px;border-radius:12px}
+#printArea{display:none}
+@media print{ body.print-one > *{display:none!important} body.print-one #printArea{display:block!important} body.print-one .invoice{box-shadow:none} }
+
 /* ---- toast ---- */
 .toast{position:fixed;left:50%;bottom:calc(104px + var(--safeb));transform:translateX(-50%) translateY(20px);z-index:120;background:var(--white);border-radius:20px;padding:8px 14px 8px 8px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(44,62,107,.25);font-weight:900;opacity:0;transition:all .25s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translateX(-50%)}
@@ -300,6 +320,7 @@ details summary:after{content:" ▾";color:var(--muted)} details[open] summary:a
   <button class="fab" id="fab" aria-label="Add">+</button>
   <button data-v="utang" id="nav-utang"><span class="e">🤝</span><span data-l="utang"></span></button>
   <button data-v="report" id="nav-report"><span class="e">📊</span><span data-l="report"></span></button>
+  <button data-v="help" id="nav-help" class="hidden"><span class="e">❓</span><span data-l="help"></span></button>
 </div></nav>
 <div id="toast" class="toast"></div>
 
@@ -312,7 +333,7 @@ details summary:after{content:" ▾";color:var(--muted)} details[open] summary:a
 const API_URL = 'https://script.google.com/macros/s/AKfycbwtNzMjBvyWxUDpFdPjF69wUlKkVW099st_29zvTVqeCJckM-FOLuUTgRXqCq99wxnE/exec';
 // =========================================================
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const qs = new URLSearchParams(location.search);
 // Remember the link code on this phone, so the installed app (Android) opens the right business
 const CODE = (() => {
@@ -381,7 +402,7 @@ if (!deviceId) { deviceId = 'd' + Math.random().toString(36).slice(2, 9); LS.set
 /* ---------- language ---------- */
 let LANG = LS.get(K('lang'), null) || 'tl';
 const L = (tl, en) => LANG === 'tl' ? tl : en;
-const NAVL = { home: ['Home', 'Home'], list: ['Listahan', 'Records'], utang: ['Utang', 'Credit'], report: ['Ulat', 'Reports'] };
+const NAVL = { home: ['Home', 'Home'], list: ['Listahan', 'Records'], utang: ['Utang', 'Credit'], report: ['Ulat', 'Reports'], help: ['Tulong', 'Help'] };
 
 /* ---------- presets ---------- */
 const BIZ_TYPES = [
@@ -417,7 +438,9 @@ const CAT_LIB = {
   permit: C('permit', 'out', '📄', 'Permit', 'Permit'),
   other_out: C('other_out', 'out', '🧾', 'Iba pa', 'Other'),
   utang_in: C('utang_in', 'in', '🤝', 'Bayad sa utang', 'Credit collected', { sys: 1 }),
-  utang_out: C('utang_out', 'out', '🤝', 'Bayad ng utang ko', 'Debt paid', { sys: 1 })
+  utang_out: C('utang_out', 'out', '🤝', 'Bayad ng utang ko', 'Debt paid', { sys: 1 }),
+  owner_in: C('owner_in', 'in', '👛', 'Dagdag puhunan (sariling pera)', 'Added capital (own money)', { eq: 1 }),
+  owner_out: C('owner_out', 'out', '👛', 'Kinuha ko para sa sarili', 'Taken for personal use', { eq: 1 })
 };
 const TYPE_CATS = {
   sari: ['sales', 'loadin', 'other_in', 'stock', 'transpo', 'meals', 'other_out'],
@@ -768,7 +791,7 @@ function periodRange(p) {
 }
 function totals(from, to) {
   let inn = 0, out = 0, n = 0;
-  live(S.entries).forEach(e => { if (e.date >= from && e.date <= to) { n++; if (e.type === 'in') inn += +e.amount; else out += +e.amount; } });
+  live(S.entries).forEach(e => { if (e.date >= from && e.date <= to && !isEq(e.cat)) { n++; if (e.type === 'in') inn += +e.amount; else out += +e.amount; } });
   return { inn, out, profit: inn - out, n };
 }
 function cashOnHand() {
@@ -794,6 +817,8 @@ const praise = () => { const p = PRAISE(); return p[Math.floor(Math.random() * p
 function setNavLabels() {
   $$('[data-l]').forEach(el => { const k = el.getAttribute('data-l'); el.textContent = NAVL[k][LANG === 'tl' ? 0 : 1]; });
   $('#nav-utang').classList.toggle('hidden', !(S.settings && S.settings.utangOn));
+  $('#nav-report').classList.toggle('hidden', !isOwner());   // reports are owner-only
+  $('#nav-help').classList.toggle('hidden', isOwner());      // staff get Help in that spot
 }
 function go(v) {
   S.view = v; closeSheet(true);
@@ -804,9 +829,10 @@ function render() {
   if (!S.settings) return;
   $('#bizName').textContent = S.settings.businessName || '';
   setNavLabels(); updateSyncBadge(); updateBell();
-  const v = { home: viewHome, list: viewList, utang: viewUtang, report: viewReport, settings: viewSettings, log: viewLog, alerts: viewAlerts }[S.view] || viewHome;
+  const v = { home: viewHome, list: viewList, utang: viewUtang, report: viewReport, settings: viewSettings, log: viewLog, alerts: viewAlerts, help: viewHelp }[S.view] || viewHome;
   $('#view').innerHTML = '<div class="view">' + v() + '</div>';
   bindView();
+  if (S.view === 'help') bindHelp();
 }
 function updateBell() {
   const b = $('#btn-bell'); if (!b) return;
@@ -840,23 +866,26 @@ function viewHome() {
   let tip = L('Pindutin ang <b>+</b> para maglista ng benta o gastos.', 'Tap <b>+</b> to record a sale or expense.');
   let mood = 'wave';
   if (new Date().getHours() >= 17 && todayN === 0) { tip = L("Oops, nakalimutan mo ilista 'to! Wala pang listahan ngayon.", 'Oops, nothing recorded yet today!'); mood = 'think'; }
-  else if (todayN > 0 && T.profit > 0 && S.period === 'today') { tip = L('Solid! Kumita ka ngayon! 💪', "Solid! You're earning today! 💪"); mood = 'cheer'; }
+  else if (todayN > 0 && T.profit > 0 && S.period === 'today' && isOwner()) { tip = L('Solid! Kumita ka ngayon! 💪', "Solid! You're earning today! 💪"); mood = 'cheer'; }
   const pl = { today: L('Ngayon', 'Today'), week: L('Linggong ito', 'This week'), month: L('Buwang ito', 'This month'), year: L('Taong ito', 'This year') };
-  const recent = live(S.entries).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)).slice(0, 5);
+  const recent = live(S.entries).filter(e => isOwner() || !isEq(e.cat)).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)).slice(0, 5);
   const sub = S.sub && S.sub.state === 'trial' && S.sub.daysLeft <= 5
     ? '<div class="card small b" style="background:#fff3cd">⏳ ' + L('Free trial: ' + S.sub.daysLeft + ' araw na lang', 'Free trial: ' + S.sub.daysLeft + ' days left') + '</div>' : '';
   const na = isOwner() ? unseenAlerts().length : 0;
   const alert = na ? '<div class="alertcard" data-act="go" data-arg="alerts"><span style="font-size:24px">🔔</span><span style="flex:1">' + L(na + ' pagbabago ng staff (edit/bura)', na + ' staff change(s) (edit/delete)') + '</span><span>' + L('Tingnan', 'View') + ' →</span></div>' : '';
-  return '<div class="hello"><div class="m">' + mascot(mood, 'hop') + '</div><div class="bubble">' + greet() + '<small>' + tip + '</small></div></div>' + alert + sub +
+  const own = isOwner();
+  const tools = '<div class="tools" id="tools"><button data-act="calc"><span class="e">🧮</span>Calculator</button><button data-act="price"><span class="e">🏷️</span>' + L('Presyo', 'Pricing') + '</button>' +
+    (own && S.settings.utangOn ? '<button data-act="invoice"><span class="e">🧾</span>' + L('Singil', 'Invoice') + '</button>' : '') + '<button data-act="go" data-arg="help"><span class="e">❓</span>' + L('Tulong', 'Help') + '</button></div>';
+  return '<div class="hello" data-act="go" data-arg="help"><div class="m">' + mascot(mood, 'hop') + '</div><div class="bubble">' + greet() + '<small>' + tip + '</small></div></div>' + alert + sub + tools +
     '<div class="chips">' + Object.keys(pl).map(k => '<button class="chip ' + (S.period === k ? 'on' : '') + '" data-act="period" data-arg="' + k + '">' + pl[k] + '</button>').join('') + '</div>' +
     '<div class="grid">' +
     '<div class="stat s-in" id="c-in"><span class="em">💚</span><div class="lbl">' + L('Kita', 'Money In') + '</div><div><div class="amt">' + money(T.inn) + '</div><div class="sub">' + pl[S.period] + '</div></div></div>' +
     '<div class="stat s-out" id="c-out"><span class="em">🧡</span><div class="lbl">' + L('Gastos', 'Expenses') + '</div><div><div class="amt">' + money(T.out) + '</div><div class="sub">' + pl[S.period] + '</div></div></div>' +
-    '<div class="stat s-profit big" id="c-profit"><span class="em">' + (T.profit >= 0 ? '🐃' : '😟') + '</span><div class="lbl">' + L('Tubo (Kita − Gastos)', 'Profit (In − Out)') + '</div><div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + (T.profit >= 0 ? L('Kumikita ka! Tuloy lang!', "You're in profit! Keep going!") : L('Mas malaki ang gastos — kaya pa yan!', 'Spending more than earning — you got this!')) + '</div></div></div>' +
+    (!own ? '' : '<div class="stat s-profit big" id="c-profit"><span class="em">' + (T.profit >= 0 ? '🐃' : '😟') + '</span><div class="lbl">' + L('Tubo (Kita − Gastos)', 'Profit (In − Out)') + '</div><div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + (T.profit >= 0 ? L('Kumikita ka! Tuloy lang!', "You're in profit! Keep going!") : L('Mas malaki ang gastos — kaya pa yan!', 'Spending more than earning — you got this!')) + '</div></div></div>') +
     (S.settings.utangOn ? '<div class="stat s-owed" data-act="go" data-arg="utang"><span class="em">🤝</span><div class="lbl">' + L('Utang sa Akin', 'Owed to Me') + '</div><div class="amt">' + money(utangSum('owed')) + '</div></div>' +
       '<div class="stat s-owe" data-act="go" data-arg="utang"><span class="em">📝</span><div class="lbl">' + L('Utang Ko', 'I Owe') + '</div><div class="amt">' + money(utangSum('owe')) + '</div></div>' : '') +
     '</div>' +
-    '<div class="cashbox" id="cash-box"><div style="font-size:30px">💵</div><div><div class="lbl">' + L('Pera mo ngayon (tantiya)', 'Cash on hand (estimate)') + '</div><div class="amt">' + money(cashOnHand()) + '</div></div></div>' +
+    (own ? '<div class="cashbox" id="cash-box"><div style="font-size:30px">💵</div><div><div class="lbl">' + L('Pera mo ngayon (tantiya)', 'Cash on hand (estimate)') + '</div><div class="amt">' + money(cashOnHand()) + '</div></div></div>' : '<div style="height:12px"></div>') +
     '<h3>' + L('Mga huling listahan', 'Latest records') + '</h3>' +
     '<div class="card">' + (recent.length ? recent.map(itemHtml).join('') + '<button class="btn soft" style="margin-top:10px" data-act="go" data-arg="list">' + L('Tingnan lahat', 'See all') + ' →</button>'
       : '<div class="empty"><div class="m">' + mascot('think') + '</div>' + L('Wala pang listahan. Pindutin ang + para magsimula!', 'No records yet. Tap + to start!') + '</div>') + '</div>';
@@ -869,7 +898,7 @@ function itemHtml(e) {
 }
 function viewList() {
   const q = S.listQ.trim().toLowerCase();
-  let arr = live(S.entries).filter(e => S.listFilter === 'all' || e.type === S.listFilter);
+  let arr = live(S.entries).filter(e => (S.listFilter === 'all' || e.type === S.listFilter) && (isOwner() || !isEq(e.cat))); // owner's personal money stays private
   if (q) arr = arr.filter(e => (catName(catOf(e.cat)) + ' ' + (e.note || '') + ' ' + (e.by || '') + ' ' + e.amount).toLowerCase().includes(q));
   arr.sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt));
   const groups = {}; arr.slice(0, 400).forEach(e => (groups[e.date] = groups[e.date] || []).push(e));
@@ -921,11 +950,13 @@ function viewUtang() {
     '<div class="card" style="background:' + (k === 'owed' ? 'var(--rose)' : '#efe9ff') + '"><div class="small b">' + (k === 'owed' ? L('Kabuuang may utang sa iyo', 'Total others owe you') : L('Kabuuang utang mo', 'Total you owe')) + '</div><div style="font-size:26px;font-weight:900">' + money(utangSum(k)) + '</div>' +
     '<div class="small b" style="margin-top:6px">⏰ ' + L('Babayaran sa loob ng 7 araw', 'Due in the next 7 days') + ': ' + money(dueSoon) + (overdue.length ? ' · <span style="color:var(--pink)">' + overdue.length + ' ' + L('lampas na', 'overdue') + '</span>' : '') + '</div>' +
     '<div class="small muted b" style="margin-top:4px">' + (k === 'owed' ? L('Kapag nagbayad sila, kusa itong maililista bilang Kita.', 'When they pay, it is recorded as Money In automatically.') : L('Kapag nagbayad ka, kusa itong maililista bilang Gastos.', 'When you pay, it is recorded as an Expense automatically.')) + '</div></div>' +
-    '<button class="btn pink" data-act="addUtang" style="margin-bottom:12px">+ ' + (k === 'owed' ? L('Bagong may utang sa akin', 'Someone owes me') : L('Bagong utang ko', 'New debt I owe')) + '</button>';
+    '<div class="row2" style="margin-bottom:12px"><button class="btn pink" data-act="addUtang">+ ' + (k === 'owed' ? L('May utang sa akin', 'Someone owes me') : L('Bagong utang ko', 'New debt I owe')) + '</button>' +
+    (k === 'owed' ? '<button class="btn soft" data-act="invoice">🧾 ' + L('Gumawa ng Singil', 'New invoice') + '</button>' : '') + '</div>';
   if (!arr.length) return h + '<div class="card empty"><div class="m">' + mascot('happy') + '</div>' + L('Walang utang dito. Yehey!', 'No credit here. Yay!') + '</div>';
   h += '<div class="card" style="padding:4px 14px">' + arr.map(u => {
     const left = u.amount - (u.paid || 0), pct = Math.min(100, Math.round((u.paid || 0) / u.amount * 100) || 0);
     const nd = nextDue(u), late = nd && nd < t;
+    if (u.invNo) u = Object.assign({}, u, { note: '🧾 ' + u.invNo + (u.note ? ' · ' + u.note : '') });
     let info;
     if (isInstall(u)) { const st = schedState(u); info = '📆 ' + L('Hulugan', 'Installment') + ' ' + st.doneN + '/' + u.schedule.length + (st.next ? ' · ' + L('Susunod', 'Next') + ': ' + money(nextAmt(u)) + ' · ' + prettyDate(st.next.due) : ''); }
     else info = '💵 ' + L('Isang bayaran', 'One payment') + ' · ' + money(u.amount) + (u.due && u.status !== 'paid' ? ' · ' + L('Due', 'Due') + ' ' + prettyDate(u.due) : '');
@@ -956,8 +987,8 @@ function reportRange() {
 }
 function reportData() {
   const R = reportRange();
-  const ents = live(S.entries).filter(e => e.date >= R.from && e.date <= R.to);
-  const T = totals(R.from, R.to), P = totals(R.pFrom, R.pTo);
+  const ents = live(S.entries).filter(e => e.date >= R.from && e.date <= R.to && !isEq(e.cat));
+  const T = totals(R.from, R.to), P = totals(R.pFrom, R.pTo), EQ = eqTotals(R.from, R.to);
   const group = (key, type) => { const g = {}; ents.filter(e => !type || e.type === type).forEach(e => { const k = key(e); g[k] = g[k] || { inn: 0, out: 0, n: 0 }; g[k].n++; if (e.type === 'in') g[k].inn += +e.amount; else g[k].out += +e.amount; }); return g; };
   const t = today();
   const ut = live(S.utang).filter(u => u.status !== 'paid');
@@ -966,7 +997,7 @@ function reportData() {
   const sumLeft = arr => arr.reduce((a, u) => a + (u.amount - (u.paid || 0)), 0);
   const dueIn = arr => arr.filter(u => nextDue(u) >= R.from && nextDue(u) <= R.to).reduce((a, u) => a + nextAmt(u), 0);
   return {
-    R, ents, T, P,
+    R, ents, T, P, EQ,
     catIn: group(e => e.cat, 'in'), catOut: group(e => e.cat, 'out'),
     byMethod: group(e => e.method || 'cash'), byPerson: group(e => e.by || '?'),
     byDay: group(e => R.isYear ? e.date.slice(0, 7) : e.date),
@@ -975,7 +1006,23 @@ function reportData() {
   };
 }
 function viewReport() {
+  if (!isOwner()) return '<h2>📊 ' + L('Ulat', 'Reports') + '</h2><div class="card empty"><div class="m">' + mascot('think') + '</div>🔒 ' + L('Ang Ulat ay para sa Owner lang.', 'Reports are for the owner only.') + '</div>';
   const D = reportData(), R = D.R, T = D.T;
+  const B = balanceSheet();
+  const eqCard = '<div class="card"><div class="b">👛 ' + L('Puhunan at Kinuha ng May-ari', "Owner's capital & withdrawals") + '</div><table class="tbl">' +
+    '<tr><td>' + L('Dagdag puhunan (sariling pera)', 'Capital added (own money)') + '</td><td class="r in">+' + money(D.EQ.put) + '</td></tr>' +
+    '<tr><td>' + L('Kinuha ng may-ari para sa sarili', 'Taken by owner for personal use') + '</td><td class="r out">−' + money(D.EQ.take) + '</td></tr></table>' +
+    '<div class="infobar">💡 ' + L('Hindi ito kasama sa Kita at Gastos, para tama ang tubo. Pero kasama ito sa Pera mo ngayon.', "Not counted in Money In or Expenses, so profit stays correct. It's included in Cash on hand.") + '</div></div>';
+  const bsCard = '<div class="card"><div class="b">🏦 ' + L('Halaga ng Negosyo', 'Business worth') + ' <span class="small muted">(' + L('ngayon', 'today') + ')</span></div><table class="tbl">' +
+    '<tr class="hd"><td>' + L('MERON ANG NEGOSYO', 'WHAT THE BUSINESS OWNS') + '</td><td></td></tr>' +
+    '<tr><td>💵 ' + L('Pera (tantiya)', 'Cash (estimate)') + '</td><td class="r">' + money(B.cash) + '</td></tr>' +
+    (S.settings.utangOn ? '<tr><td>🤝 ' + L('Utang sa akin', 'Owed to me') + '</td><td class="r">' + money(B.recv) + '</td></tr>' : '') +
+    '<tr><td>📦 ' + L('Ari-arian (gamit, paninda)', 'Assets (equipment, stock)') + '</td><td class="r">' + money(B.gamit) + '</td></tr>' +
+    '<tr class="sub"><td>' + L('Kabuuang meron', 'Total owned') + '</td><td class="r">' + money(B.owns) + '</td></tr>' +
+    '<tr class="hd"><td>' + L('UTANG NG NEGOSYO', 'WHAT THE BUSINESS OWES') + '</td><td></td></tr>' +
+    '<tr><td>📝 ' + L('Utang ko', 'I owe') + '</td><td class="r out">−' + money(B.owe) + '</td></tr>' +
+    '<tr class="tot"><td>🐃 ' + L('HALAGA NG NEGOSYO', 'BUSINESS WORTH') + '</td><td class="r" style="color:' + (B.worth >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(B.worth) + '</td></tr></table>' +
+    '<button class="btn soft noprint" data-act="assets" style="margin-top:10px">🏦 ' + (assetsList().length ? L('Ari-arian', 'Assets') + ' (' + assetsList().length + ')' : '＋ ' + L('Ilagay ang ari-arian', 'Add assets')) + '</button></div>';
   // bars
   const n = R.isYear ? 12 : R.lastDay, bi = Array(n).fill(0), bo = Array(n).fill(0);
   D.ents.forEach(e => { const i = R.isYear ? +e.date.slice(5, 7) - 1 : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
@@ -1025,10 +1072,11 @@ function viewReport() {
     '<div class="card"><div class="b">🧾 ' + L('Kita at Gastos (Profit & Loss)', 'Profit & Loss') + '</div>' + pl + '</div>' +
     '<div class="card"><div class="b">🧡 ' + L('Saan napunta ang gastos', 'Where the money went') + '</div>' + expBars +
     (D.noReceipt ? '<div class="infobar">📎 ' + L(D.noReceipt + ' gastos ang walang resibo', D.noReceipt + ' expense(s) have no receipt') + '</div>' : '') + '</div>' +
+    eqCard + bsCard +
     // 4 method
     '<div class="card"><div class="b">💳 ' + L('Ayon sa paraan ng bayad', 'By payment method') + '</div><table class="tbl">' + mRows + '</table></div>' +
     // 5 utang
-    utCard +
+    utCard + taxCard(R, T) +
     // 6 person
     '<div class="card"><div class="b">👥 ' + L('Sino ang naglista', 'Recorded by') + '</div><table class="tbl">' + pRows + '</table></div>' +
     // 7 table
@@ -1055,7 +1103,9 @@ function viewSettings() {
       '<div class="set"><div>' + L('Pwede bang mag-edit ang staff?', 'Can staff edit?') + '<div class="muted">' + sm[0] + ' ' + (LANG === 'tl' ? sm[1] : sm[2]) + '</div></div><button class="lnk" data-act="editStaffMode">' + L('Palitan', 'Change') + '</button></div>' +
       '<div class="set"><div>🔔 ' + L('Mga pagbabago ng staff', 'Staff changes') + '<div class="muted">' + L('Mga in-edit o binura ng staff', 'What staff edited or deleted') + '</div></div><button class="lnk" data-act="go" data-arg="alerts">' + L('Tingnan', 'Open') + '</button></div>' +
       '<div class="set"><div>📧 ' + L('Email para sa abiso', 'Email alerts') + '<div class="muted">' + esc(s.ownerEmail || L('Wala (opsyonal)', 'None (optional)')) + '</div></div><button class="lnk" data-act="editEmail">' + L('Palitan', 'Change') + '</button></div>' +
-      '<div class="set"><div>🔑 Owner PIN</div><button class="lnk" data-act="changePin">' + L('Palitan', 'Change') + '</button></div></div>' +
+      '<div class="set"><div>🔑 Owner PIN</div><button class="lnk" data-act="changePin">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>🏛️ ' + L('Buwis (VAT / 3% / 8%)', 'Tax (VAT / 3% / 8%)') + '<div class="muted">' + (s.vat ? 'VAT 12%' : TAX_OPTS[s.taxOpt || 'pt3'][0]) + '</div></div><button class="lnk" data-act="taxSettings">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>🏦 ' + L('Ari-arian ng negosyo', 'Business assets') + '<div class="muted">' + assetsList().length + ' · ' + money(assetsTotal()) + '</div></div><button class="lnk" data-act="assets">' + L('Tingnan', 'Open') + '</button></div></div>' +
       '<div class="card"><div class="b">🏪 ' + L('Negosyo', 'Business') + '</div>' +
       '<div class="set"><div>' + L('Pangalan ng negosyo', 'Business name') + '<div class="muted">' + esc(s.businessName) + '</div></div><button class="lnk" data-act="editBiz">' + L('Palitan', 'Change') + '</button></div>' +
       '<div class="set"><div>Currency<div class="muted">' + CURRENCIES[cur()].f + ' ' + CURRENCIES[cur()][LANG] + ' (' + sym() + ')</div></div><button class="lnk" data-act="editCur">' + L('Palitan', 'Change') + '</button></div>' +
@@ -1069,6 +1119,7 @@ function viewSettings() {
     h += '<div class="lockbar">🔒 ' + L('Ang settings ng negosyo ay para sa Owner lang.', 'Business settings are for the owner only.') + '<div class="small" style="font-weight:700;margin-top:4px">' + sm[0] + ' ' + (LANG === 'tl' ? sm[3] : sm[4]) + '</div></div>';
   }
   h += '<div class="card">' +
+    '<div class="set"><div>❓ ' + L('Tanong kay Kwento (tulong)', 'Ask Kwento (help)') + '</div><button class="lnk" data-act="go" data-arg="help">' + L('Buksan', 'Open') + '</button></div>' +
     '<div class="set"><div>📜 ' + L('Kasaysayan ng pagbabago', 'Activity log') + '<div class="muted">' + L('Sino ang nagdagdag/nag-edit', 'Who added or changed what') + '</div></div><button class="lnk" data-act="go" data-arg="log">' + L('Tingnan', 'Open') + '</button></div>' +
     '<div class="set"><div>🎓 ' + L('Ulitin ang tutorial', 'Replay tutorial') + '</div><button class="lnk" data-act="replayTour">' + L('Simulan', 'Start') + '</button></div>' +
     (isStandalone() ? '' : '<div class="set"><div>📲 ' + L('I-add sa Home Screen', 'Add to Home Screen') + '</div><button class="lnk" data-act="showInstall">' + L('Paano?', 'How?') + '</button></div>') +
@@ -1133,6 +1184,11 @@ const ACTIONS = {
   showInstall: () => installGuide(true),
   syncNow: () => { flush(true); loadLog(); toast(L('Nagsi-sync…', 'Syncing…'), 'happy'); },
   unlockOwner: () => unlockOwner(),
+  calc: () => openCalculator(),
+  price: () => openPriceCalc(),
+  invoice: () => openInvoiceForm(),
+  assets: () => openAssets(),
+  taxSettings: () => openTaxSettings(),
   createPin: () => createPinFlow(false),
   changePin: () => createPinFlow(false, true),
   lockOwner: () => { if (!confirm(L('Gawing Staff ang phone na ito? Kailangan ulit ang PIN para maging Owner.', 'Switch this phone to Staff? You will need the PIN to become Owner again.'))) return; LS.del(K('pin')); render(); toast(L('Staff mode na ang phone na ito', 'This phone is now in Staff mode'), 'happy'); },
@@ -1242,13 +1298,14 @@ function openEntry(existing, preset) {
   const e = existing ? Object.assign({}, existing) : Object.assign({ id: uid('e'), type: 'in', amount: '', cat: '', method: (S.settings.methods || ['cash'])[0], date: today(), note: '' }, preset || {});
   const isNew = !existing;
   let pending = null; // new receipt {blob,mime}
-  const cats = () => (S.settings.categories || []).filter(c => c.t === e.type && !c.sys);
+  const cats = () => (S.settings.categories || []).filter(c => c.t === e.type && !c.sys).concat(isOwner() ? [e.type === 'in' ? CAT_LIB.owner_in : CAT_LIB.owner_out] : []);
   if (!e.cat) e.cat = (cats()[0] || {}).k;
   const el = openSheet(
     '<div class="sheet-head"><h2>' + (isNew ? L('Maglista', 'New record') : L('I-edit', 'Edit record')) + '</h2><button class="x" id="sh-close">×</button></div>' +
     '<div class="seg" id="sh-type"><button data-t="in" class="in">💚 ' + L('Kita (Pumasok)', 'Money In') + '</button><button data-t="out" class="out">🧡 ' + L('Gastos (Lumabas)', 'Expense') + '</button></div>' +
     '<div class="amtwrap" id="sh-amt"><span>' + sym() + '</span><input id="f-amt" inputmode="decimal" placeholder="0.00" value="' + (e.amount || '') + '" autocomplete="off"></div>' +
-    '<div class="field" id="sh-cats"><label>' + L('Para saan?', 'What for?') + '</label><div class="catgrid" id="f-cats"></div></div>' +
+    '<div class="small b muted hidden" id="f-vat" style="margin:-6px 6px 10px"></div>' +
+    '<div class="field" id="sh-cats"><label>' + L('Para saan?', 'What for?') + '</label><div class="catgrid" id="f-cats"></div><div class="infobar hidden" id="f-eq"></div></div>' +
     '<div class="field"><label>' + L('Paano binayaran?', 'Paid how?') + '</label><div class="catgrid" id="f-meth"></div></div>' +
     '<div class="row2"><div class="field"><label>' + L('Petsa', 'Date') + '</label><input class="inp" type="date" id="f-date" value="' + e.date + '"></div></div>' +
     '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="f-note" placeholder="' + L('hal. 3 kahon ng softdrinks', 'e.g. 3 cases of soda') + '" value="' + esc(e.note || '') + '"></div>' +
@@ -1262,6 +1319,9 @@ function openEntry(existing, preset) {
     el.querySelectorAll('#sh-type button').forEach(b => b.classList.toggle('on', b.dataset.t === e.type));
     el.querySelector('#f-cats').innerHTML = cats().map(c => '<button class="cat ' + (c.k === e.cat ? 'sel' : '') + '" data-c="' + c.k + '">' + c.i + ' ' + esc(catName(c)) + '</button>').join('');
     el.querySelectorAll('#f-cats .cat').forEach(b => b.onclick = () => { if (lockReason(existing) && !isNew) return; e.cat = b.dataset.c; paintType(); });
+    const eqb = el.querySelector('#f-eq');
+    if (eqb) { eqb.classList.toggle('hidden', !isEq(e.cat)); eqb.innerHTML = '👛 ' + (e.type === 'in' ? L('Sariling pera mong idinagdag. Hindi ito ituturing na kita, para tama ang tubo.', "Your own money added. It won't count as income, so profit stays correct.") : L('Perang kinuha mo para sa sarili. Hindi ito ituturing na gastos ng negosyo, para tama ang tubo.', "Money you took for yourself. It won't count as a business expense, so profit stays correct.")); }
+    vatHint();
   };
   const paintMeth = () => {
     el.querySelector('#f-meth').innerHTML = (S.settings.methods || ['cash']).map(k => '<button class="cat ' + (k === e.method ? 'sel' : '') + '" data-m="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('');
@@ -1299,6 +1359,14 @@ function openEntry(existing, preset) {
     catch (err) { pending = null; el.querySelector('#f-rtxt').textContent = err.message; }
   };
   const amt = el.querySelector('#f-amt');
+  function vatHint() {
+    const vb = el.querySelector('#f-vat'); if (!vb) return;
+    const a = num(el.querySelector('#f-amt') ? el.querySelector('#f-amt').value : 0);
+    const show = S.settings.vat && e.type === 'in' && a > 0 && !isEq(e.cat);
+    vb.classList.toggle('hidden', !show);
+    if (show) vb.textContent = '🏛️ ' + L('May VAT na ', 'Includes VAT of ') + money(a * 12 / 112) + L(' dito (12%)', ' (12%)');
+  }
+  amt.addEventListener('input', vatHint); vatHint();
   if (isNew) setTimeout(() => { if (!tourActive) amt.focus(); }, 320);
   el.querySelector('#f-save').onclick = async () => {
     const a = num(amt.value);
@@ -1317,7 +1385,7 @@ function openEntry(existing, preset) {
     const sign = rec.type === 'in' ? '+' : '−';
     closeSheet();
     await queueOp({ op: 'upsert', table: 'entries', action: isNew ? 'add' : 'edit', rec, summary: sign + money(a) + ' · ' + rec.catLabel + (rec.note ? ' · ' + rec.note : '') });
-    render(); toast(praise(), 'cheer');
+    render(); toast(isEq(rec.cat) ? L('Noted, Bossing! Hindi ito kasama sa ' + (rec.type === 'in' ? 'kita' : 'gastos') + ' ng negosyo, para tama ang tubo mo. 👛', "Noted, Boss! This isn't counted as business " + (rec.type === 'in' ? 'income' : 'expense') + ', so your profit stays correct. 👛') : praise(), 'cheer');
   };
   const del = el.querySelector('#f-del');
   if (del) del.onclick = async () => {
@@ -1408,8 +1476,10 @@ function openUtangDetail(u) {
       '<button class="btn main" id="p-save">💸 ' + (u.kind === 'owed' ? L('Nagbayad sila', 'They paid') : L('Nagbayad ako', 'I paid')) + '</button>' : '<div class="card b" style="margin-top:12px;background:var(--green)">✓ ' + L('Bayad na lahat!', 'Fully paid!') + '</div>') +
     sched +
     '<h3>' + L('Mga bayad', 'Payments') + '</h3><div class="card" style="padding:6px 14px">' + ((u.payments || []).length ? u.payments.slice().reverse().map(p => '<div class="set"><div>' + prettyDate(p.d) + '<div class="muted">✍️ ' + esc(p.by || '') + '</div></div><div class="val in">' + money(p.amt) + '</div></div>').join('') : '<div class="muted b small" style="padding:10px 0">' + L('Wala pa', 'None yet') + '</div>') + '</div>' +
-    (lock ? '<div class="lockbar" style="margin-top:12px">' + lock + '</div>' : '<div class="row2" style="margin-top:12px"><button class="btn soft" id="u-edit">✏️ ' + L('I-edit', 'Edit') + '</button><button class="btn danger" id="u-del">🗑️ ' + L('Burahin', 'Delete') + '</button></div>'));
+    (u.kind === 'owed' ? '<button class="btn soft" id="u-inv" style="margin-top:12px">🧾 ' + L('Singil (Invoice)', 'Invoice') + (u.invNo ? ' · ' + u.invNo : '') + '</button>' : '') +
+    (lock ? '<div class="lockbar" style="margin-top:12px">' + lock + '</div>' : '<div class="row2" style="margin-top:12px">' + (u.items && u.items.length ? '' : '<button class="btn soft" id="u-edit">✏️ ' + L('I-edit', 'Edit') + '</button>') + '<button class="btn danger" id="u-del">🗑️ ' + L('Burahin', 'Delete') + '</button></div>'));
   el.querySelector('[data-x]').onclick = () => closeSheet();
+  const ui = el.querySelector('#u-inv'); if (ui) ui.onclick = () => { closeSheet(true); showInvoice(u); };
   const ue = el.querySelector('#u-edit'); if (ue) ue.onclick = () => { closeSheet(true); openUtangForm(u); };
   const ud = el.querySelector('#u-del'); if (ud) ud.onclick = async () => {
     if (!confirm(L('Burahin ang utang na ito?', 'Delete this credit record?'))) return;
@@ -1445,6 +1515,10 @@ function exportCsv() {
   Object.keys(D.catIn).forEach(k => add(L('Kita', 'In') + ': ' + catName(catOf(k)), f2(D.catIn[k].inn)));
   Object.keys(D.catOut).forEach(k => add(L('Gastos', 'Out') + ': ' + catName(catOf(k)), f2(-D.catOut[k].out)));
   add(L('Tubo', 'Net Profit'), f2(T.profit)); add();
+  add(L('PUHUNAN AT KINUHA NG MAY-ARI', "OWNER'S CAPITAL & WITHDRAWALS")); add(L('Dagdag puhunan', 'Capital added'), f2(D.EQ.put)); add(L('Kinuha ng may-ari', 'Taken by owner'), f2(-D.EQ.take)); add();
+  const B = balanceSheet();
+  add(L('HALAGA NG NEGOSYO (ngayon)', 'BUSINESS WORTH (today)')); add(L('Pera (tantiya)', 'Cash (estimate)'), f2(B.cash)); add(L('Utang sa akin', 'Owed to me'), f2(B.recv));
+  assetsList().forEach(a => add(L('Ari-arian: ', 'Asset: ') + a.name, f2(num(a.value)))); add(L('Utang ko', 'I owe'), f2(-B.owe)); add(L('Halaga ng negosyo', 'Business worth'), f2(B.worth)); add();
   add(L('AYON SA PARAAN NG BAYAD', 'BY PAYMENT METHOD'), L('Kita', 'In'), L('Gastos', 'Out'));
   Object.keys(D.byMethod).forEach(k => add((METHODS[k] || ['', k])[1], f2(D.byMethod[k].inn), f2(D.byMethod[k].out))); add();
   add(L('SINO ANG NAGLISTA', 'RECORDED BY'), L('Bilang', 'Count'), L('Kita', 'In'), L('Gastos', 'Out'));
@@ -1455,13 +1529,657 @@ function exportCsv() {
     add();
   }
   add(L('MGA LISTAHAN', 'TRANSACTIONS')); add(L('Petsa', 'Date'), L('Uri', 'Type'), L('Kategorya', 'Category'), L('Halaga', 'Amount'), L('Paraan', 'Method'), L('Tala', 'Note'), L('Inilista ni', 'Recorded by'), L('Resibo', 'Receipt'));
-  D.ents.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(e => add(e.date, e.type === 'in' ? L('Kita', 'Money In') : L('Gastos', 'Expense'), catName(catOf(e.cat)), (e.type === 'in' ? '' : '-') + f2(e.amount), (METHODS[e.method] || ['', e.method])[1], e.note || '', e.by || '', e.receiptId || e.receiptLocal ? '✓' : ''));
+  live(S.entries).filter(e => e.date >= R.from && e.date <= R.to).sort((a, b) => a.date.localeCompare(b.date)).forEach(e => add(e.date, e.type === 'in' ? L('Kita', 'Money In') : L('Gastos', 'Expense'), catName(catOf(e.cat)), (e.type === 'in' ? '' : '-') + f2(e.amount), (METHODS[e.method] || ['', e.method])[1], e.note || '', e.by || '', e.receiptId || e.receiptLocal ? '✓' : ''));
   const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   a.download = 'Kwentoink-' + (S.settings.businessName || 'report').replace(/[^\w-]+/g, '_') + '-' + (R.isYear ? R.y : S.repMonth) + '.csv';
   document.body.appendChild(a); a.click(); a.remove();
   toast(L('Na-download na! Buksan sa Excel', 'Downloaded! Open it in Excel'), 'cheer');
+}
+
+/* =================================================================
+   TOOLS: calculator, presyo calculator, ari-arian, singil (invoice), buwis
+   ================================================================= */
+const isEq = k => !!(CAT_LIB[k] && CAT_LIB[k].eq);
+function eqTotals(from, to) {
+  let put = 0, take = 0;
+  live(S.entries).forEach(e => { if (isEq(e.cat) && e.date >= from && e.date <= to) { if (e.type === 'in') put += +e.amount; else take += +e.amount; } });
+  return { put, take };
+}
+
+/* ---------- calculator ---------- */
+function calcEval(expr) {
+  let t = String(expr).replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+  if (!/^[0-9+\-*/.%() ]*$/.test(t) || !t.trim()) return NaN;
+  t = t.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+  try { const v = Function('"use strict";return (' + t + ')')(); return isFinite(v) ? Math.round(v * 100) / 100 : NaN; } catch (e) { return NaN; }
+}
+function openCalculator() {
+  let expr = '';
+  const keys = ['C', '⌫', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '−', '1', '2', '3', '+', '00', '0', '.', '='];
+  const el = openSheet('<div class="sheet-head"><h2>🧮 Calculator</h2><button class="x" data-x>×</button></div>' +
+    '<div class="calcd"><div class="ce" id="c-expr">&nbsp;</div><div class="cv" id="c-val">0</div></div>' +
+    '<div class="calck">' + keys.map(k => '<button data-k="' + k + '" class="' + (/[÷×−+=]/.test(k) ? 'op' : k === 'C' || k === '⌫' || k === '%' ? 'fn' : '') + (k === '=' ? ' eq' : '') + '">' + k + '</button>').join('') + '</div>' +
+    '<button class="btn pink" id="c-use" style="margin-top:12px">✍️ ' + L('Ilista ito', 'Record this') + '</button>');
+  const show = () => {
+    el.querySelector('#c-expr').textContent = expr || ' ';
+    const v = calcEval(expr);
+    el.querySelector('#c-val').textContent = expr ? (isNaN(v) ? '…' : v.toLocaleString(undefined, { maximumFractionDigits: 2 })) : '0';
+  };
+  el.querySelectorAll('.calck button').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k === 'C') expr = '';
+    else if (k === '⌫') expr = expr.slice(0, -1);
+    else if (k === '=') { const v = calcEval(expr); if (!isNaN(v)) expr = String(v); }
+    else { if (/[÷×−+]/.test(k) && /[÷×−+]$/.test(expr)) expr = expr.slice(0, -1); expr += k; }
+    show();
+  });
+  el.querySelector('[data-x]').onclick = () => closeSheet();
+  el.querySelector('#c-use').onclick = () => { const v = calcEval(expr); closeSheet(true); openEntry(null, v > 0 ? { amount: v } : null); };
+}
+
+/* ---------- presyo (pricing) calculator ---------- */
+function openPriceCalc() {
+  const vatOn = !!(S.settings && S.settings.vat);
+  const st = { m: 30, vat: vatOn };
+  const el = openSheet('<div class="sheet-head"><h2>🏷️ ' + L('Presyo calculator', 'Price calculator') + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="infobar">💡 ' + L('Para malaman kung magkano ibebenta para may tubo ka.', 'Find a selling price that gives you a profit.') + '</div>' +
+    '<div class="row2"><div class="field"><label>' + L('Puhunan (binili)', 'Cost (what you paid)') + '</label><div class="amtwrap" style="margin:0;padding:8px 12px"><span style="font-size:20px">' + sym() + '</span><input id="pc-cost" inputmode="decimal" placeholder="0.00" style="font-size:24px"></div></div>' +
+    '<div class="field"><label>' + L('Ilang piraso?', 'How many pieces?') + '</label><input class="inp" id="pc-qty" inputmode="numeric" value="1" style="font-size:20px;font-weight:800"></div></div>' +
+    '<div class="field"><label>' + L('Gaano kalaking tubo ang gusto mo?', 'How much profit do you want?') + '</label><div class="catgrid" id="pc-m"></div>' +
+    '<input class="inp hidden" id="pc-mc" inputmode="decimal" placeholder="%" style="margin-top:8px"></div>' +
+    '<div class="set" style="padding:6px 2px 12px"><div>' + L('VAT-registered ka ba?', 'VAT-registered?') + '<div class="muted">' + L('Kung hindi sigurado, malamang hindi (para sa maliit na negosyo).', "If unsure, probably not (for small businesses).") + '</div></div><button class="switch ' + (st.vat ? 'on' : '') + '" id="pc-vat"></button></div>' +
+    '<div class="card" id="pc-out" style="background:var(--green)"></div>' +
+    '<h3>' + L('O kaya: may presyo ka na?', 'Or: already have a price?') + '</h3>' +
+    '<div class="field"><label>' + L('Presyo ng benta kada piraso', 'Selling price per piece') + '</label><div class="amtwrap" style="margin:0;padding:8px 12px"><span style="font-size:20px">' + sym() + '</span><input id="pc-sell" inputmode="decimal" placeholder="0.00" style="font-size:24px"></div></div>' +
+    '<div class="card" id="pc-out2" style="background:var(--white)"></div>');
+  const q = s => el.querySelector(s);
+  const paintM = () => {
+    q('#pc-m').innerHTML = [10, 20, 30, 50, 100].map(v => '<button class="cat ' + (st.m === v && !st.custom ? 'sel' : '') + '" data-m="' + v + '">' + v + '%</button>').join('') + '<button class="cat ' + (st.custom ? 'sel' : '') + '" data-m="c">' + L('Iba', 'Other') + '</button>';
+    q('#pc-m').querySelectorAll('.cat').forEach(b => b.onclick = () => { if (b.dataset.m === 'c') { st.custom = true; q('#pc-mc').classList.remove('hidden'); q('#pc-mc').focus(); } else { st.custom = false; st.m = +b.dataset.m; q('#pc-mc').classList.add('hidden'); } paintM(); calc(); });
+  };
+  const calc = () => {
+    const cost = num(q('#pc-cost').value), qty = Math.max(1, parseInt(q('#pc-qty').value) || 1);
+    const m = st.custom ? num(q('#pc-mc').value) : st.m;
+    const per = cost / qty;
+    if (!(per > 0)) { q('#pc-out').innerHTML = '<div class="small b muted">' + L('Ilagay ang puhunan para makita ang presyo.', 'Enter the cost to see the price.') + '</div>'; }
+    else {
+      const price = per * (1 + m / 100), vat = st.vat ? price * 0.12 : 0, fin = price + vat, tubo = price - per;
+      const sug = Math.ceil(fin);
+      q('#pc-out').innerHTML = '<table class="tbl">' +
+        '<tr><td>' + L('Puhunan kada piraso', 'Cost per piece') + '</td><td class="r">' + money(per) + '</td></tr>' +
+        '<tr><td>+ ' + L('Tubo', 'Profit') + ' (' + m + '%)</td><td class="r in">' + money(tubo) + '</td></tr>' +
+        (st.vat ? '<tr><td>+ VAT 12% <span class="small muted">(' + L('para sa BIR', 'for the BIR') + ')</span></td><td class="r">' + money(vat) + '</td></tr>' : '') +
+        '<tr class="tot"><td>' + L('Presyo kada piraso', 'Price per piece') + '</td><td class="r">' + money(fin) + '</td></tr></table>' +
+        '<div class="b" style="margin-top:10px">💡 ' + L('Mungkahing presyo: ', 'Suggested price: ') + money(sug) + '</div>' +
+        (qty > 1 ? '<div class="small b" style="margin-top:4px">' + L('Kung maubos lahat ng ' + qty + ' piraso, tubo mo: ', 'If all ' + qty + ' pieces sell, your profit: ') + money(tubo * qty) + '</div>' : '');
+    }
+    const sell = num(q('#pc-sell').value);
+    if (!(sell > 0) || !(per > 0)) q('#pc-out2').innerHTML = '<div class="small b muted">' + L('Ilagay ang puhunan at presyo para makita ang tubo.', 'Enter the cost and price to see your profit.') + '</div>';
+    else {
+      const net = st.vat ? sell / 1.12 : sell, tubo = net - per, pct = per ? tubo / per * 100 : 0;
+      q('#pc-out2').innerHTML = '<div class="b" style="font-size:18px;color:' + (tubo >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + (tubo >= 0 ? L('Tubo kada piraso: ', 'Profit per piece: ') : L('Lugi kada piraso: ', 'Loss per piece: ')) + money(Math.abs(tubo)) + '</div>' +
+        '<div class="small b muted" style="margin-top:4px">' + L('Markup', 'Markup') + ': ' + pct.toFixed(1) + '%' + (st.vat ? ' · ' + L('VAT sa presyo', 'VAT in price') + ': ' + money(sell - net) : '') + '</div>' +
+        (tubo < 0 ? '<div class="small b" style="margin-top:6px">⚠️ ' + L('Mas mababa sa puhunan ang presyo!', 'The price is below your cost!') + '</div>' : '');
+    }
+  };
+  q('#pc-vat').onclick = () => { st.vat = !st.vat; q('#pc-vat').classList.toggle('on', st.vat); calc(); };
+  ['#pc-cost', '#pc-qty', '#pc-mc', '#pc-sell'].forEach(s => q(s).addEventListener('input', calc));
+  q('[data-x]').onclick = () => closeSheet();
+  paintM(); calc(); setTimeout(() => q('#pc-cost').focus(), 300);
+}
+
+/* ---------- ari-arian (assets) ---------- */
+const assetsList = () => (S.settings && S.settings.assets) || [];
+const assetsTotal = () => assetsList().reduce((a, x) => a + num(x.value), 0);
+function balanceSheet() {
+  const cash = cashOnHand(), recv = utangSum('owed'), gamit = assetsTotal(), owe = utangSum('owe');
+  return { cash, recv, gamit, owe, owns: cash + recv + gamit, worth: cash + recv + gamit - owe };
+}
+function openAssets() {
+  if (!isOwner()) { toast(L('Owner lang ang pwede dito', 'Owner only'), 'think'); return; }
+  const list = assetsList();
+  const el = openSheet('<div class="sheet-head"><h2>🏦 ' + L('Ari-arian ng Negosyo', 'Business assets') + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="infobar">💡 ' + L('Mga gamit ng negosyo na may halaga: freezer, motor, tindahan, paninda sa estante. Ilagay ang tantiyang halaga NGAYON.', 'Things the business owns with value: freezer, motorcycle, store, stock on shelves. Enter their estimated value TODAY.') + '</div>' +
+    '<div class="card" style="padding:6px 14px">' + (list.length ? list.map(a => '<div class="set" data-a="' + a.id + '" style="cursor:pointer"><div>' + esc(a.icon || '📦') + ' ' + esc(a.name) + (a.note ? '<div class="muted">' + esc(a.note) + '</div>' : '') + '</div><div class="b">' + money(num(a.value)) + ' ›</div></div>').join('') +
+      '<div class="set"><div class="b">' + L('Kabuuan', 'Total') + '</div><div class="b">' + money(assetsTotal()) + '</div></div>'
+      : '<div class="muted b small" style="padding:12px 0">' + L('Wala pang ari-arian. Pindutin ang + sa baba.', 'No assets yet. Tap + below.') + '</div>') + '</div>' +
+    '<button class="btn main" id="as-add">＋ ' + L('Dagdag ari-arian', 'Add asset') + '</button>');
+  el.querySelector('[data-x]').onclick = () => closeSheet();
+  el.querySelector('#as-add').onclick = () => { closeSheet(true); assetForm(); };
+  el.querySelectorAll('[data-a]').forEach(r => r.onclick = () => { closeSheet(true); assetForm(list.find(a => a.id === r.dataset.a)); });
+}
+const ASSET_ICONS = ['📦', '🧊', '🏍️', '🚚', '🏪', '💻', '🍳', '🪑', '🛠️', '🏠'];
+function assetForm(a) {
+  const x = a ? Object.assign({}, a) : { id: uid('a'), name: '', value: '', note: '', icon: '📦' };
+  const el = openSheet('<div class="sheet-head"><h2>' + (a ? L('I-edit', 'Edit') : L('Bagong ari-arian', 'New asset')) + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="field"><label>' + L('Ano ito?', 'What is it?') + '</label><input class="inp" id="as-n" value="' + esc(x.name) + '" placeholder="' + L('hal. Freezer, Motor, Paninda sa estante', 'e.g. Freezer, Motorcycle, Stock on shelves') + '"></div>' +
+    '<div class="field"><label>' + L('Larawan', 'Icon') + '</label><div class="catgrid" id="as-i">' + ASSET_ICONS.map(i => '<button class="cat ' + (i === x.icon ? 'sel' : '') + '" data-i="' + i + '">' + i + '</button>').join('') + '</div></div>' +
+    '<div class="field"><label>' + L('Halaga ngayon (tantiya)', 'Value today (estimate)') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="as-v" inputmode="decimal" placeholder="0.00" value="' + (x.value || '') + '"></div></div>' +
+    '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="as-note" value="' + esc(x.note || '') + '"></div>' +
+    '<button class="btn main" id="as-save">' + L('I-save', 'Save') + '</button>' + (a ? '<button class="btn danger" id="as-del" style="margin-top:10px">🗑️ ' + L('Alisin', 'Remove') + '</button>' : ''));
+  const q = s => el.querySelector(s);
+  q('[data-x]').onclick = () => { closeSheet(true); openAssets(); };
+  q('#as-i').querySelectorAll('.cat').forEach(b => b.onclick = () => { x.icon = b.dataset.i; q('#as-i').querySelectorAll('.cat').forEach(c => c.classList.toggle('sel', c === b)); });
+  setTimeout(() => q('#as-n').focus(), 300);
+  q('#as-save').onclick = () => {
+    const name = q('#as-n').value.trim(), v = num(q('#as-v').value);
+    if (!name || !(v >= 0)) { toast(L('Ilagay ang pangalan at halaga', 'Enter a name and value'), 'think'); return; }
+    Object.assign(x, { name, value: v, note: q('#as-note').value.trim() });
+    const list = assetsList().filter(y => y.id !== x.id).concat([x]);
+    closeSheet(true); saveSettings({ assets: list }, '🏦 ' + name + ' ' + money(v)); setTimeout(openAssets, 150);
+  };
+  const d = q('#as-del'); if (d) d.onclick = () => { if (!confirm(L('Alisin ito?', 'Remove this?'))) return; closeSheet(true); saveSettings({ assets: assetsList().filter(y => y.id !== x.id) }, L('Inalis', 'Removed') + ' 🏦 ' + x.name); setTimeout(openAssets, 150); };
+}
+
+/* ---------- singil (invoice) ---------- */
+function invNo() { const d = new Date(); return 'INV-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + Math.random().toString(36).slice(2, 5).toUpperCase(); }
+function openInvoiceForm() {
+  const items = [{ d: '', q: 1, p: '' }];
+  const el = openSheet('<div class="sheet-head"><h2>🧾 ' + L('Bagong singil', 'New invoice') + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="field"><label>' + L('Para kanino?', 'Bill to') + '</label><input class="inp" id="iv-name" placeholder="' + L('Pangalan ng customer', 'Customer name') + '"></div>' +
+    '<div class="field"><label>' + L('Mga item', 'Items') + '</label><div id="iv-items"></div><button class="cat" id="iv-add" style="margin-top:8px">＋ ' + L('Dagdag item', 'Add item') + '</button></div>' +
+    '<div class="card b" id="iv-total" style="background:var(--sky2);font-size:18px"></div>' +
+    '<div class="field"><label>' + L('Kailan babayaran?', 'Due date') + '</label><input class="inp" type="date" id="iv-due" value="' + addFreq(today(), 'week', 1) + '"></div>' +
+    '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="iv-note" placeholder="' + L('hal. Salamat po!', 'e.g. Thank you!') + '"></div>' +
+    '<button class="btn main" id="iv-save">' + L('I-save at tingnan', 'Save & view') + '</button>');
+  const q = s => el.querySelector(s);
+  const total = () => items.reduce((a, it) => a + num(it.q) * num(it.p), 0);
+  const paint = () => {
+    q('#iv-items').innerHTML = items.map((it, i) => '<div class="ivrow"><input class="inp" data-f="d" data-i="' + i + '" placeholder="' + L('Item', 'Item') + '" value="' + esc(it.d) + '"><input class="inp" data-f="q" data-i="' + i + '" inputmode="decimal" placeholder="' + L('Dami', 'Qty') + '" value="' + esc(it.q) + '"><input class="inp" data-f="p" data-i="' + i + '" inputmode="decimal" placeholder="' + L('Presyo', 'Price') + '" value="' + esc(it.p) + '">' + (items.length > 1 ? '<button class="x" data-rm="' + i + '" style="width:36px;height:44px">×</button>' : '') + '</div>').join('');
+    q('#iv-items').querySelectorAll('input').forEach(inp => inp.oninput = () => { items[+inp.dataset.i][inp.dataset.f] = inp.value; q('#iv-total').textContent = L('Kabuuan: ', 'Total: ') + money(total()); });
+    q('#iv-items').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { items.splice(+b.dataset.rm, 1); paint(); });
+    q('#iv-total').textContent = L('Kabuuan: ', 'Total: ') + money(total());
+  };
+  q('#iv-add').onclick = () => { items.push({ d: '', q: 1, p: '' }); paint(); };
+  q('[data-x]').onclick = () => closeSheet();
+  paint(); setTimeout(() => q('#iv-name').focus(), 300);
+  q('#iv-save').onclick = async () => {
+    const name = q('#iv-name').value.trim();
+    const clean = items.filter(it => it.d.trim() && num(it.q) > 0 && num(it.p) > 0).map(it => ({ d: it.d.trim(), q: num(it.q), p: num(it.p) }));
+    const amt = clean.reduce((a, it) => a + it.q * it.p, 0);
+    if (!name || !clean.length) { toast(L('Ilagay ang customer at kahit isang item', 'Enter a customer and at least one item'), 'think'); return; }
+    const rec = { id: uid('u'), kind: 'owed', name, amount: Math.round(amt * 100) / 100, paid: 0, due: q('#iv-due').value, note: q('#iv-note').value.trim(), status: 'open', payments: [], ptype: 'cash', schedule: [], items: clean, invNo: invNo(), createdAt: nowIso(), updatedAt: nowIso(), by: myName(), device: deviceId, deleted: false };
+    closeSheet(true);
+    await queueOp({ op: 'upsert', table: 'utang', action: 'add', rec, summary: '🧾 ' + rec.invNo + ' · ' + name + ' ' + money(rec.amount) });
+    S.utKind = 'owed'; if (S.view === 'utang') render();
+    showInvoice(rec);
+  };
+}
+function invoiceText(u) {
+  const items = (u.items && u.items.length) ? u.items : [{ d: u.note || L('Utang', 'Balance'), q: 1, p: u.amount }];
+  const left = u.amount - (u.paid || 0);
+  const methods = (S.settings.methods || []).map(k => (METHODS[k] || ['', k])[1]).join(', ');
+  return '🧾 ' + L('SINGIL', 'INVOICE') + ' — ' + S.settings.businessName + '\n' + (u.invNo || '') + '\n' + L('Petsa: ', 'Date: ') + prettyDate(ymd(new Date(u.createdAt || Date.now()))) + '\n' + L('Para kay: ', 'Bill to: ') + u.name + '\n\n' +
+    items.map(it => '• ' + it.d + ' — ' + it.q + ' × ' + money(it.p) + ' = ' + money(it.q * it.p)).join('\n') + '\n\n' +
+    L('Kabuuan: ', 'Total: ') + money(u.amount) + '\n' + (u.paid ? L('Nabayaran: ', 'Paid: ') + money(u.paid) + '\n' : '') + L('Natitira: ', 'Balance due: ') + money(left) + '\n' +
+    (nextDue(u) ? L('Bayaran bago: ', 'Due by: ') + prettyDate(nextDue(u)) + '\n' : '') + (methods ? L('Pwedeng bayaran sa: ', 'Pay via: ') + methods + '\n' : '') + '\n' + L('Salamat po! 🐃', 'Thank you! 🐃');
+}
+function invoiceHtml(u) {
+  const items = (u.items && u.items.length) ? u.items : [{ d: u.note || L('Utang', 'Balance'), q: 1, p: u.amount }];
+  const left = u.amount - (u.paid || 0);
+  return '<div class="invoice"><div class="ivh"><img src="logo.png" alt=""><div><div class="b" style="font-size:18px">' + esc(S.settings.businessName) + '</div><div class="small muted b">' + L('SINGIL / INVOICE', 'INVOICE') + '</div></div><div style="margin-left:auto;text-align:right"><div class="b">' + esc(u.invNo || '—') + '</div><div class="small muted b">' + prettyDate(ymd(new Date(u.createdAt || Date.now()))) + '</div></div></div>' +
+    '<div class="small b muted" style="margin:10px 0 4px">' + L('PARA KAY', 'BILL TO') + '</div><div class="b" style="font-size:16px">' + esc(u.name) + '</div>' +
+    '<table class="tbl" style="margin-top:12px"><tr class="hd"><td>' + L('Item', 'Item') + '</td><td class="r">' + L('Dami', 'Qty') + '</td><td class="r">' + L('Presyo', 'Price') + '</td><td class="r">' + L('Halaga', 'Amount') + '</td></tr>' +
+    items.map(it => '<tr><td>' + esc(it.d) + '</td><td class="r">' + it.q + '</td><td class="r">' + money(it.p) + '</td><td class="r">' + money(it.q * it.p) + '</td></tr>').join('') +
+    '<tr class="sub"><td colspan="3">' + L('Kabuuan', 'Total') + '</td><td class="r">' + money(u.amount) + '</td></tr>' +
+    (u.paid ? '<tr><td colspan="3">' + L('Nabayaran', 'Paid') + '</td><td class="r in">−' + money(u.paid) + '</td></tr>' : '') +
+    '<tr class="tot"><td colspan="3">' + L('Natitira', 'Balance due') + '</td><td class="r">' + money(left) + '</td></tr></table>' +
+    (nextDue(u) && u.status !== 'paid' ? '<div class="b" style="margin-top:10px">📅 ' + L('Bayaran bago ', 'Due by ') + prettyDate(nextDue(u)) + '</div>' : '') +
+    (u.status === 'paid' ? '<div class="b" style="margin-top:10px;color:var(--green2)">✓ ' + L('BAYAD NA', 'PAID') + '</div>' : '') +
+    ((S.settings.methods || []).length ? '<div class="small b muted" style="margin-top:6px">' + L('Pwedeng bayaran sa: ', 'Pay via: ') + (S.settings.methods || []).map(k => (METHODS[k] || ['', k])[1]).join(', ') + '</div>' : '') +
+    (u.note ? '<div class="small b" style="margin-top:6px">' + esc(u.note) + '</div>' : '') + '<div class="small muted b" style="margin-top:12px;text-align:center">' + L('Salamat po! 🐃', 'Thank you! 🐃') + '</div></div>';
+}
+function showInvoice(u) {
+  if (!u.invNo && u.kind === 'owed') u = Object.assign({}, u);
+  const el = openSheet('<div class="sheet-head"><h2>🧾 ' + L('Singil', 'Invoice') + '</h2><button class="x" data-x>×</button></div>' + invoiceHtml(u) +
+    '<div class="row2" style="margin-top:12px"><button class="btn pink" id="iv-share">📤 ' + L('I-share', 'Share') + '</button><button class="btn soft" id="iv-pdf">📄 PDF</button></div>' +
+    '<button class="btn soft" id="iv-copy" style="margin-top:10px">📋 ' + L('Kopyahin bilang text', 'Copy as text') + '</button>');
+  const txt = invoiceText(u);
+  el.querySelector('[data-x]').onclick = () => closeSheet();
+  el.querySelector('#iv-share').onclick = async () => { if (navigator.share) { try { await navigator.share({ title: (u.invNo || 'Invoice'), text: txt }); } catch (e) { } } else copyText(txt); };
+  el.querySelector('#iv-copy').onclick = () => copyText(txt);
+  el.querySelector('#iv-pdf').onclick = () => printHtml(invoiceHtml(u));
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast(L('Nakopya! I-paste sa Messenger', 'Copied! Paste it in Messenger'), 'cheer'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast(L('Nakopya!', 'Copied!'), 'cheer'); } catch (x) { } ta.remove(); }
+}
+function printHtml(html) {
+  let pa = $('#printArea'); if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
+  pa.innerHTML = html; document.body.classList.add('print-one');
+  const done = () => { document.body.classList.remove('print-one'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => { window.print(); setTimeout(done, 1500); }, 100);
+}
+
+/* ---------- buwis (tax) ---------- */
+const TAX_OPTS = {
+  pt3: ['3% Percentage tax', '3% sa kabuuang benta kada buwan (karaniwan sa non-VAT).', '3% of total sales (common for non-VAT).'],
+  it8: ['8% Income tax option', '8% sa benta na lampas ₱250,000 sa isang taon.', '8% of sales above ₱250,000 a year.'],
+  none: ['Wala / Hindi alam', 'Hindi ipapakita ang tantiya ng buwis.', "Don't show a tax estimate."]
+};
+function taxCard(R, T) {
+  const s = S.settings;
+  let rows = '', title = '';
+  if (s.vat) {
+    const outV = T.inn * 12 / 112, inV = T.out * 12 / 112;
+    title = 'VAT 12%';
+    rows = '<tr><td>' + L('VAT na kasama sa benta', 'VAT included in sales') + '</td><td class="r">' + money(outV) + '</td></tr>' +
+      '<tr><td>' + L('VAT sa binili (kung may VAT receipt)', 'VAT on purchases (with VAT receipts)') + '</td><td class="r">−' + money(inV) + '</td></tr>' +
+      '<tr class="tot"><td>' + L('Tantiyang VAT na babayaran', 'Estimated VAT to pay') + '</td><td class="r">' + money(Math.max(0, outV - inV)) + '</td></tr>';
+  } else if (s.taxOpt === 'it8') {
+    const ytd = totals(R.y + '-01-01', R.to < today() ? R.to : today()).inn;
+    title = '8% Income tax';
+    rows = '<tr><td>' + L('Benta ngayong taon (hanggang ngayon)', 'Sales this year so far') + '</td><td class="r">' + money(ytd) + '</td></tr>' +
+      '<tr><td>' + L('Hindi binubuwisan', 'Tax-free amount') + '</td><td class="r">−' + money(250000) + '</td></tr>' +
+      '<tr class="tot"><td>' + L('Tantiyang 8% ngayong taon', 'Estimated 8% this year') + '</td><td class="r">' + money(Math.max(0, ytd - 250000) * 0.08) + '</td></tr>';
+  } else if (s.taxOpt === 'pt3' || !s.taxOpt) {
+    title = '3% Percentage tax';
+    rows = '<tr><td>' + L('Kabuuang benta', 'Total sales') + ' (' + R.title + ')</td><td class="r">' + money(T.inn) + '</td></tr>' +
+      '<tr class="tot"><td>' + L('Tantiyang 3%', 'Estimated 3%') + '</td><td class="r">' + money(T.inn * 0.03) + '</td></tr>';
+  } else return '';
+  return '<div class="card"><div class="b">🏛️ ' + L('Tantiya ng Buwis', 'Tax estimate') + ' · ' + title + '</div><table class="tbl">' + rows + '</table>' +
+    '<div class="infobar">⚠️ ' + L('Tantiya lang ito. Kumpirmahin sa accountant o BIR bago mag-file.', 'This is only an estimate. Confirm with an accountant or the BIR before filing.') + (!s.taxOpt && !s.vat ? ' ' + L('Itakda ang buwis mo sa Settings.', 'Set your tax type in Settings.') : '') + '</div></div>';
+}
+function openTaxSettings() {
+  const s = S.settings;
+  const st = { vat: !!s.vat, opt: s.taxOpt || 'pt3' };
+  const el = openSheet('<div class="sheet-head"><h2>🏛️ ' + L('Buwis', 'Tax') + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="set"><div>' + L('VAT-registered ka ba?', 'Are you VAT-registered?') + '<div class="muted">' + L('Karaniwan, kapag lampas ₱3M ang benta kada taon.', 'Usually when sales go over ₱3M a year.') + '</div></div><button class="switch ' + (st.vat ? 'on' : '') + '" id="tx-vat"></button></div>' +
+    '<div id="tx-opts"><div class="small b muted" style="margin:12px 4px 8px">' + L('Kung non-VAT, anong buwis ang gamit mo?', 'If non-VAT, which tax do you use?') + '</div><div class="opts">' +
+    Object.keys(TAX_OPTS).map(k => '<button class="opt ' + (k === st.opt ? 'sel' : '') + '" data-o="' + k + '"><span>' + TAX_OPTS[k][0] + '<small>' + TAX_OPTS[k][LANG === 'tl' ? 1 : 2] + '</small></span></button>').join('') + '</div></div>' +
+    '<div class="infobar">⚠️ ' + L('Pantantiya lang ito sa Ulat. Hindi ito pag-file sa BIR. Kung hindi sigurado, magtanong sa accountant.', 'This is only for estimates in Reports. It is not BIR filing. If unsure, ask an accountant.') + '</div>' +
+    '<button class="btn main" id="tx-save">' + L('I-save', 'Save') + '</button>');
+  const q = s => el.querySelector(s);
+  const paint = () => { q('#tx-vat').classList.toggle('on', st.vat); q('#tx-opts').classList.toggle('hidden', st.vat); el.querySelectorAll('[data-o]').forEach(b => b.classList.toggle('sel', b.dataset.o === st.opt)); };
+  q('#tx-vat').onclick = () => { st.vat = !st.vat; paint(); };
+  el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { st.opt = b.dataset.o; paint(); });
+  q('[data-x]').onclick = () => closeSheet();
+  q('#tx-save').onclick = () => { closeSheet(); saveSettings({ vat: st.vat, taxOpt: st.opt }, L('Buwis', 'Tax') + ': ' + (st.vat ? 'VAT' : TAX_OPTS[st.opt][0])); toast(L('Na-save!', 'Saved!'), 'cheer'); };
+  paint();
+}
+
+
+/* =================================================================
+   TANONG KAY KWENTO — built-in help (works offline, no AI needed)
+   Each item: q = [Tagalog, English], a = [Tagalog, English],
+   k = extra search words, t = topic, go = optional button
+   ================================================================= */
+const HELP_TOPICS = {
+  start: ['🚀', 'Pagsisimula', 'Getting started'], rec: ['✍️', 'Paglilista', 'Recording'], rcpt: ['📎', 'Resibo', 'Receipts'],
+  utang: ['🤝', 'Utang at Singil', 'Credit & invoices'], rep: ['📊', 'Ulat at Pera', 'Reports & money'], own: ['👛', 'Puhunan at Ari-arian', 'Capital & assets'],
+  team: ['👑', 'Owner at Staff', 'Owner & staff'], sync: ['📶', 'Offline at Sync', 'Offline & sync'], tax: ['🏛️', 'Buwis at Presyo', 'Tax & pricing'],
+  words: ['📖', 'Mga salita sa bookkeeping', 'Bookkeeping words'], fix: ['🛠️', 'Problema at Account', 'Problems & account']
+};
+const HELP = [
+  // ---------- getting started ----------
+  { t: 'start', k: 'kwentoink app ano ito what is bookkeeping listahan',
+    q: ['Ano ang Kwentoink?', 'What is Kwentoink?'],
+    a: ['Ang Kwentoink ay simpleng <b>listahan ng pera ng negosyo</b> mo sa phone. Dito mo ililista ang <b>Kita</b> (perang pumasok), <b>Gastos</b> (perang lumabas), <b>Utang</b>, at <b>resibo</b>. Ako (si Kwento 🐃) na ang nagkukuwenta ng tubo mo at gumagawa ng ulat. Gumagana ito kahit walang internet.',
+      'Kwentoink is a simple <b>money notebook for your business</b> on your phone. You record <b>Money In</b>, <b>Expenses</b>, <b>Credit (utang)</b> and <b>receipts</b>. I (Kwento 🐃) do the math for your profit and make your reports. It works even without internet.'] },
+  { t: 'start', k: 'simula umpisa first time unang gamit start begin how to use',
+    q: ['Paano magsimula sa Kwentoink?', 'How do I get started?'],
+    a: ['1) Buksan ang link mo. 2) Sagutin ang ilang tanong (pangalan ng negosyo, currency, PIN). 3) Tuwing may benta o gastos, pindutin ang malaking <b>+</b> sa baba, ilagay ang halaga, piliin kung para saan, at <b>I-save</b>. Yun lang! Ako na ang bahala sa kuwenta.',
+      '1) Open your link. 2) Answer a few questions (business name, currency, PIN). 3) Every time you sell or spend, tap the big <b>+</b> at the bottom, type the amount, pick what it was for, and <b>Save</b>. That\'s it! I handle the math.'] },
+  { t: 'start', k: 'iphone install home screen safari add app icon',
+    q: ['Paano i-install sa iPhone?', 'How do I install it on iPhone?'],
+    a: ['Buksan ang link sa <b>Safari</b>. Pindutin ang <b>Share</b> button (kahon na may arrow pataas) — sa bagong iPhone, nasa loob ito ng <b>•••</b> sa baba. Mag-scroll pababa, pindutin ang <b>Add to Home Screen</b>, tapos <b>Add</b>. Lalabas ang carabao 🐃 sa Home Screen mo. Laging buksan ang Kwentoink mula doon.',
+      'Open your link in <b>Safari</b>. Tap <b>Share</b> (the box with an up arrow) — on newer iPhones it\'s inside <b>•••</b> at the bottom. Scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>. The carabao 🐃 appears on your Home Screen. Always open Kwentoink from there.'], go: 'install' },
+  { t: 'start', k: 'android install chrome home screen app icon samsung',
+    q: ['Paano i-install sa Android?', 'How do I install it on Android?'],
+    a: ['Buksan ang link sa <b>Chrome</b>. Kung may lumabas na <b>I-install ngayon</b>, pindutin ito. Kung wala, pindutin ang <b>⋮</b> sa itaas (kanan) → <b>Add to Home screen</b> o <b>Install app</b> → <b>Install</b>. Minsan isang minuto bago lumabas ang icon.',
+      'Open your link in <b>Chrome</b>. If you see <b>Install now</b>, tap it. If not, tap <b>⋮</b> at the top right → <b>Add to Home screen</b> or <b>Install app</b> → <b>Install</b>. Sometimes the icon takes a minute to appear.'], go: 'install' },
+  { t: 'start', k: 'messenger facebook link hindi bumubukas open in browser',
+    q: ['Binuksan ko ang link sa Messenger, bakit hindi maayos?', 'I opened the link in Messenger — why doesn\'t it work well?'],
+    a: ['Hindi gumagana nang maayos ang Kwentoink sa loob ng Messenger o Facebook. Pindutin ang <b>•••</b> sa itaas at piliin ang <b>Open in Safari/Chrome</b>, o kopyahin ang link at i-paste sa Safari (iPhone) o Chrome (Android).',
+      'Kwentoink doesn\'t work well inside Messenger or Facebook. Tap <b>•••</b> at the top and choose <b>Open in Safari/Chrome</b>, or copy the link and paste it into Safari (iPhone) or Chrome (Android).'] },
+  { t: 'start', k: 'staff empleyado tindero share link ibang phone add user',
+    q: ['Paano maidagdag ang staff ko?', 'How do I add my staff?'],
+    a: ['I-forward lang ang <b>parehong link</b> mo sa staff. Bubuksan nila ito sa phone nila, ilalagay ang pangalan nila, at may maikling tutorial. Iisang negosyo lang ang makikita nila — hindi sila makakagawa ng bago.',
+      'Just forward your <b>same link</b> to your staff. They open it on their phone, type their name, and get a short tutorial. They only see your one business — they can\'t create another.'] },
+  { t: 'start', k: 'bagong phone nawala link lost link new phone transfer',
+    q: ['Nagpalit ako ng phone o nawala ang link ko. Paano?', 'I changed phones or lost my link. What now?'],
+    a: ['Buksan lang ulit ang <b>parehong link</b> sa bagong phone — nandoon pa rin lahat ng listahan mo kasi naka-save ito online. Kung wala ka nang kopya ng link, humingi sa nagbigay sa iyo ng Kwentoink. Kung owner ka, ilagay ulit ang PIN sa Settings → <b>Ako ang Owner</b>.',
+      'Just open the <b>same link</b> on the new phone — all your records are still there because they\'re saved online. If you no longer have the link, ask whoever gave you Kwentoink. If you\'re the owner, enter your PIN again in Settings → <b>I\'m the Owner</b>.'] },
+  { t: 'start', k: 'wika language tagalog english palitan change',
+    q: ['Paano palitan ang wika (Tagalog/English)?', 'How do I change the language?'],
+    a: ['Pumunta sa <b>Settings ⚙️</b> → <b>Wika</b> → piliin ang Tagalog o English. Para sa phone mo lang ito — pwedeng English sa staff at Tagalog sa iyo.',
+      'Go to <b>Settings ⚙️</b> → <b>Language</b> → choose Tagalog or English. It\'s per phone — staff can use English while you use Tagalog.'], go: 'settings' },
+  { t: 'start', k: 'currency peso dollar euro pera palitan',
+    q: ['Paano palitan ang currency (₱, $, €)?', 'How do I change the currency?'],
+    a: ['Owner lang: <b>Settings ⚙️</b> → <b>Currency</b> → piliin ang Peso, Dollar, o Euro. Paalala: hindi nito kino-convert ang lumang halaga — pinapalitan lang ang simbolo.',
+      'Owner only: <b>Settings ⚙️</b> → <b>Currency</b> → choose Peso, Dollar or Euro. Note: it doesn\'t convert old amounts — it only changes the symbol.'], go: 'settings' },
+  { t: 'start', k: 'tutorial ulitin replay turo guide',
+    q: ['Paano ulitin ang tutorial?', 'How do I replay the tutorial?'],
+    a: ['Pumunta sa <b>Settings ⚙️</b> → <b>Ulitin ang tutorial</b> → <b>Simulan</b>.', 'Go to <b>Settings ⚙️</b> → <b>Replay tutorial</b> → <b>Start</b>.'], go: 'tour' },
+
+  // ---------- recording ----------
+  { t: 'rec', k: 'benta sale sales kita income maglista record add pumasok',
+    q: ['Paano maglista ng benta (kita)?', 'How do I record a sale?'],
+    a: ['Pindutin ang <b>+</b> → piliin ang <b>💚 Kita</b> → i-type ang halaga → piliin kung para saan (hal. Benta) → piliin kung paano binayaran (Cash, GCash…) → <b>I-save</b>. Pwede kang maglista kada benta o isang beses sa gabi para sa buong araw.',
+      'Tap <b>+</b> → choose <b>💚 Money In</b> → type the amount → pick what it was for (e.g. Sales) → pick how it was paid (Cash, GCash…) → <b>Save</b>. You can record each sale, or once at night for the whole day.'], go: 'add' },
+  { t: 'rec', k: 'gastos expense bayad binili stock paninda lumabas spend',
+    q: ['Paano maglista ng gastos?', 'How do I record an expense?'],
+    a: ['Pindutin ang <b>+</b> → piliin ang <b>🧡 Gastos</b> → i-type ang halaga → piliin kung para saan (Paninda, Pamasahe, Kuryente…) → <b>I-save</b>. Kung may resibo, kuhanan ng picture.',
+      'Tap <b>+</b> → choose <b>🧡 Expense</b> → type the amount → pick what it was for (Stock, Transport, Electricity…) → <b>Save</b>. If there\'s a receipt, take a photo.'], go: 'add' },
+  { t: 'rec', k: 'kaibahan difference kita gastos income expense',
+    q: ['Ano ang pagkakaiba ng Kita at Gastos?', 'What\'s the difference between Money In and Expenses?'],
+    a: ['<b>Kita</b> = perang <b>pumasok</b> sa negosyo (benta, bayad ng customer). <b>Gastos</b> = perang <b>lumabas</b> para patakbuhin ang negosyo (paninda, upa, kuryente, pamasahe). <b>Tubo</b> = Kita bawas Gastos.',
+      '<b>Money In</b> = money that <b>came in</b> (sales, customer payments). <b>Expenses</b> = money that <b>went out</b> to run the business (stock, rent, electricity, transport). <b>Profit</b> = Money In minus Expenses.'] },
+  { t: 'rec', k: 'edit burahin delete mali ayusin change wrong amount',
+    q: ['Paano mag-edit o magbura ng listahan?', 'How do I edit or delete a record?'],
+    a: ['Pumunta sa <b>📒 Listahan</b> → pindutin ang listahan → baguhin at <b>I-save</b>, o pindutin ang <b>🗑️ Burahin</b>. Ang owner ay pwedeng mag-edit ng lahat. Ang staff ay depende sa patakaran ng owner — kung naka-🔒, sabihan ang owner.',
+      'Go to <b>📒 Records</b> → tap the record → change it and <b>Save</b>, or tap <b>🗑️ Delete</b>. The owner can edit everything. Staff depend on the owner\'s rule — if it shows 🔒, tell the owner.'], go: 'list' },
+  { t: 'rec', k: 'petsa date kahapon yesterday ibang araw past date',
+    q: ['Paano maglista para sa ibang araw (hal. kahapon)?', 'How do I record something for another day?'],
+    a: ['Sa form ng paglilista, palitan ang <b>Petsa</b> bago i-save. Default ay ngayong araw.', 'In the record form, change the <b>Date</b> before saving. It defaults to today.'], go: 'add' },
+  { t: 'rec', k: 'kategorya category uri dagdag add new type',
+    q: ['Paano magdagdag ng bagong kategorya?', 'How do I add a new category?'],
+    a: ['Owner lang: <b>Settings ⚙️</b> → <b>Uri ng kita</b> o <b>Uri ng gastos</b> → <b>＋ Dagdag</b>. Pwede ring alisin gamit ang ×; hindi mabubura ang mga lumang listahan.',
+      'Owner only: <b>Settings ⚙️</b> → <b>Money-in categories</b> or <b>Expense categories</b> → <b>＋ Add</b>. You can remove one with ×; old records stay.'], go: 'settings' },
+  { t: 'rec', k: 'gcash maya cash bank card paraan bayad payment method',
+    q: ['Ano ang "Paano binayaran" (Cash, GCash…)?', 'What is "Paid how" (Cash, GCash…)?'],
+    a: ['Dito mo malalaman kung saan napunta ang pera — sa kahon (Cash) o sa GCash/Maya/Bank. Sa <b>Ulat</b>, may hiwalay na listahan kada paraan ng bayad. Ang owner ay pwedeng magdagdag o mag-alis sa Settings → <b>Paraan ng bayad</b>.',
+      'It shows where the money went — the cash box or GCash/Maya/Bank. <b>Reports</b> show totals per payment method. The owner can add or remove methods in Settings → <b>Payment methods</b>.'] },
+  { t: 'rec', k: 'hanap search find listahan lumang record',
+    q: ['Paano maghanap ng lumang listahan?', 'How do I find an old record?'],
+    a: ['Pumunta sa <b>📒 Listahan</b> at i-type sa 🔎 box ang salita, pangalan, o halaga. Pwede ring piliin ang <b>Kita</b> o <b>Gastos</b> lang.',
+      'Go to <b>📒 Records</b> and type a word, name or amount in the 🔎 box. You can also filter by <b>Money In</b> or <b>Expenses</b>.'], go: 'list' },
+
+  // ---------- receipts ----------
+  { t: 'rcpt', k: 'resibo receipt picture photo litrato kuha camera attach',
+    q: ['Paano maglagay ng resibo?', 'How do I attach a receipt?'],
+    a: ['Sa form ng paglilista, pindutin ang <b>📷 Kuhanan o pumili ng resibo</b>. Pwedeng kumuha ng bagong picture o pumili sa gallery. Pwede ring PDF.',
+      'In the record form, tap <b>📷 Take or choose a photo</b>. Take a new photo or pick one from your gallery. PDFs work too.'], go: 'add' },
+  { t: 'rcpt', k: 'malaki photo mb size iphone mabagal large file',
+    q: ['Malaki ang photo ng iPhone ko, ok lang ba?', 'My iPhone photos are big — is that okay?'],
+    a: ['Oo! Kahit malaki ang photo, pinapaliit ko muna ito sa phone mo (mga 300–500 KB) bago i-upload, pero malinaw pa rin mabasa. Kaya mabilis at hindi kumakain ng data.',
+      'Yes! However big the photo, I shrink it on your phone first (about 300–500 KB) before uploading, and it stays readable. So it\'s fast and saves data.'] },
+  { t: 'rcpt', k: 'saan resibo makita view receipt drive folder',
+    q: ['Saan napupunta ang resibo at paano ko ito makikita?', 'Where do receipts go and how do I see them?'],
+    a: ['Naka-save ang resibo sa ligtas na folder online. Para makita: buksan ang listahan (may 📎) → <b>👀 Tingnan ang resibo</b>. Kung offline ka, naka-save muna sa phone at ia-upload pag may internet na.',
+      'Receipts are saved in a safe online folder. To see one: open the record (marked 📎) → <b>👀 View receipt</b>. If you\'re offline, it\'s kept on the phone and uploaded once you\'re back online.'] },
+
+  // ---------- utang & invoices ----------
+  { t: 'utang', k: 'utang sa akin receivable may utang customer pautang credit owed',
+    q: ['Ano ang "Utang sa Akin"?', 'What is "Owed to Me"?'],
+    a: ['Ito ang listahan ng mga <b>may utang sa iyo</b> — hal. customer na kumuha muna at magbabayad mamaya. Sa bookkeeping, tinatawag itong <b>receivable</b>. Bahagi ito ng pera mo na hindi mo pa hawak.',
+      'This is the list of people who <b>owe you</b> — e.g. a customer who took goods and will pay later. In bookkeeping it\'s called a <b>receivable</b>. It\'s money that\'s yours but not in hand yet.'], go: 'utang' },
+  { t: 'utang', k: 'utang ko payable supplier inutang liability debt owe',
+    q: ['Ano ang "Utang Ko"?', 'What is "I Owe"?'],
+    a: ['Ito ang mga <b>utang ng negosyo mo</b> sa iba — hal. supplier na pinautang ka ng paninda. Sa bookkeeping, tinatawag itong <b>payable</b> o <b>liability</b>.',
+      'These are <b>debts your business owes</b> others — e.g. a supplier who gave you stock on credit. In bookkeeping it\'s called a <b>payable</b> or <b>liability</b>.'], go: 'utang' },
+  { t: 'utang', k: 'maglista utang paano add credit new',
+    q: ['Paano maglista ng utang?', 'How do I record credit (utang)?'],
+    a: ['Pumunta sa <b>🤝 Utang</b> → piliin ang <b>Utang sa Akin</b> o <b>Utang Ko</b> → pindutin ang pink na button → ilagay ang pangalan, halaga, at paano babayaran (<b>Cash</b> o <b>Hulugan</b>) → <b>I-save</b>.',
+      'Go to <b>🤝 Credit</b> → choose <b>Owed to Me</b> or <b>I Owe</b> → tap the pink button → enter the name, amount and how it will be paid (<b>One payment</b> or <b>Installment</b>) → <b>Save</b>.'], go: 'utang' },
+  { t: 'utang', k: 'hulugan installment hulog lingguhan buwanan 15 araw schedule',
+    q: ['Ano ang Hulugan at paano ito gamitin?', 'What is Installment (Hulugan)?'],
+    a: ['Ang <b>Hulugan</b> ay bayad nang paunti-unti. Ilagay kung ilang hulog, gaano kadalas (Lingguhan, Kada 15 araw, Buwanan), at kailan ang unang hulog. Ako na ang gagawa ng iskedyul at magsasabi kung kailan ang susunod at kung may lampas na.',
+      '<b>Installment</b> means paying little by little. Enter how many payments, how often (Weekly, Every 15 days, Monthly) and the first due date. I make the schedule and show the next due date and anything overdue.'], go: 'utang' },
+  { t: 'utang', k: 'bayad nagbayad payment record utang paid hulog',
+    q: ['Paano i-record ang bayad sa utang?', 'How do I record a payment on credit?'],
+    a: ['Sa <b>🤝 Utang</b>, pindutin ang pangalan → ilagay ang halagang binayad (naka-handa na ang susunod na hulog) → <b>Nagbayad sila</b> o <b>Nagbayad ako</b>. Kusa itong maililista sa Kita o Gastos.',
+      'In <b>🤝 Credit</b>, tap the name → enter the amount paid (the next installment is pre-filled) → <b>They paid</b> or <b>I paid</b>. It\'s automatically recorded as Money In or an Expense.'], go: 'utang' },
+  { t: 'utang', k: 'bakit kita bayad utang doble double counted',
+    q: ['Bakit naging Kita ang bayad sa utang?', 'Why did a credit payment become Money In?'],
+    a: ['Kasi doon lang pumasok ang pera sa kahon mo. Kapag umutang ang customer, wala pang pera — kaya hindi pa ito Kita. Pag nagbayad na, saka ito nagiging Kita. Kaya hindi ito nadodoble.',
+      'Because that\'s when the cash actually came in. When the customer takes goods on credit, no money has arrived yet, so it\'s not Money In yet. Once they pay, it becomes Money In. So nothing is counted twice.'] },
+  { t: 'utang', k: 'lampas overdue late due singilin collect',
+    q: ['Ano ang ibig sabihin ng "Lampas na"?', 'What does "Overdue" mean?'],
+    a: ['Lumampas na ang petsa ng bayad pero hindi pa bayad. Makikita mo ito sa 🤝 Utang at sa <b>Ulat → Ulat ng Utang</b>, kasama ang listahan ng dapat singilin.',
+      'The due date has passed and it\'s still unpaid. You\'ll see it in 🤝 Credit and in <b>Reports → Credit report</b>, with a list of who to collect from.'], go: 'utang' },
+  { t: 'utang', k: 'invoice singil bill billing statement gumawa create',
+    q: ['Paano gumawa ng singil (invoice)?', 'How do I make an invoice?'],
+    a: ['Pumunta sa <b>🤝 Utang → Utang sa Akin</b> → <b>🧾 Gumawa ng Singil</b>. Ilagay ang customer, mga item (pangalan, dami, presyo), at due date. Kusa itong maidadagdag sa Utang sa Akin. Pwede ring gumawa ng singil mula sa kahit anong utang: buksan ito → <b>🧾 Singil</b>.',
+      'Go to <b>🤝 Credit → Owed to Me</b> → <b>🧾 New invoice</b>. Enter the customer, items (name, quantity, price) and due date. It\'s added to Owed to Me automatically. You can also make an invoice from any credit record: open it → <b>🧾 Invoice</b>.'], go: 'invoice' },
+  { t: 'utang', k: 'send invoice ipadala messenger share pdf print',
+    q: ['Paano ipadala ang singil sa customer?', 'How do I send the invoice to a customer?'],
+    a: ['Buksan ang singil → <b>📤 I-share</b> para ipadala sa Messenger/Viber bilang text, o <b>📄 PDF</b> para i-save bilang PDF at i-send. Pwede ring <b>📋 Kopyahin</b> at i-paste.',
+      'Open the invoice → <b>📤 Share</b> to send it via Messenger/Viber as text, or <b>📄 PDF</b> to save it as a PDF and send it. You can also <b>📋 Copy</b> and paste.'] },
+
+  // ---------- reports & money ----------
+  { t: 'rep', k: 'tubo profit kita kinita net income',
+    q: ['Ano ang Tubo?', 'What is Profit (Tubo)?'],
+    a: ['<b>Tubo = Kita − Gastos.</b> Ito ang talagang kinita ng negosyo. Hindi kasama dito ang puhunang inilagay mo o ang perang kinuha mo para sa sarili.',
+      '<b>Profit = Money In − Expenses.</b> It\'s what the business really earned. It doesn\'t include capital you put in or money you took for yourself.'], go: 'report' },
+  { t: 'rep', k: 'pera mo ngayon cash on hand kahon hawak tantiya',
+    q: ['Ano ang "Pera mo ngayon"?', 'What is "Cash on hand"?'],
+    a: ['Tantiya ito ng perang hawak ng negosyo ngayon: <b>Panimulang pera + lahat ng Kita − lahat ng Gastos</b> (kasama ang puhunan at kinuha mo). Tama ito kung lahat ay nailista.',
+      'It\'s an estimate of the money the business has now: <b>Starting cash + all Money In − all Expenses</b> (including capital and withdrawals). It\'s right as long as everything is recorded.'] },
+  { t: 'rep', k: 'mali pera ngayon wrong cash starting panimula ayusin',
+    q: ['Mali ang "Pera mo ngayon". Paano ayusin?', '"Cash on hand" is wrong. How do I fix it?'],
+    a: ['Bilangin ang totoong pera sa kahon at GCash. Kung iba, baka may hindi nailista. Pwede ring ayusin ng owner ang <b>Panimulang pera</b> sa Settings para tumugma.',
+      'Count the real money in the box and GCash. If it\'s different, something may not be recorded. The owner can also adjust <b>Starting cash</b> in Settings so it matches.'], go: 'settings' },
+  { t: 'rep', k: 'excel download pdf print export ulat report',
+    q: ['Paano i-download ang ulat sa Excel o PDF?', 'How do I download reports as Excel or PDF?'],
+    a: ['Owner lang: pumunta sa <b>📊 Ulat</b> → piliin ang buwan o taon → sa pinakababa, pindutin ang <b>📗 Excel</b> o <b>📄 PDF / Print</b>. Kasama sa Excel ang lahat ng ulat at listahan.',
+      'Owner only: go to <b>📊 Reports</b> → pick the month or year → at the bottom tap <b>📗 Excel</b> or <b>📄 PDF / Print</b>. The Excel file includes every report and all records.'], go: 'report' },
+  { t: 'rep', k: 'profit loss p&l income statement kita at gastos report',
+    q: ['Ano ang "Kita at Gastos" report (Profit & Loss)?', 'What is the Profit & Loss report?'],
+    a: ['Ipinapakita nito kada kategorya kung saan galing ang kita at saan napunta ang gastos, tapos ang <b>Tubo (Net)</b>. Ito ang pinakamahalagang ulat para malaman kung kumikita ang negosyo.',
+      'It shows, by category, where the money came from and where it went, then the <b>Net Profit</b>. It\'s the most important report for knowing if the business is earning.'], go: 'report' },
+  { t: 'rep', k: 'halaga negosyo balance sheet net worth equity worth',
+    q: ['Ano ang "Halaga ng Negosyo"?', 'What is "Business worth"?'],
+    a: ['Ito ang <b>Balance Sheet</b> sa simpleng salita: <b>lahat ng meron ang negosyo</b> (pera, utang sa iyo, gamit/ari-arian) <b>bawas lahat ng utang mo</b>. Ang matitira ay ang tunay na halaga ng negosyo mo.',
+      'It\'s the <b>Balance Sheet</b> in plain words: <b>everything the business owns</b> (cash, money owed to you, equipment/assets) <b>minus everything it owes</b>. What\'s left is what your business is really worth.'], go: 'report' },
+  { t: 'rep', k: 'staff ulat report hidden bakit hindi makita',
+    q: ['Bakit hindi nakikita ng staff ang Ulat?', 'Why can\'t staff see Reports?'],
+    a: ['Para sa privacy ng owner, ang <b>Ulat</b>, <b>Tubo</b>, at <b>Pera mo ngayon</b> ay para sa owner lang. Ang staff ay nakakakita ng Kita at Gastos para sa trabaho nila.',
+      'For the owner\'s privacy, <b>Reports</b>, <b>Profit</b> and <b>Cash on hand</b> are owner-only. Staff see Money In and Expenses for their work.'] },
+
+  // ---------- capital & assets ----------
+  { t: 'own', k: 'puhunan capital investment pera ko sariling add money',
+    q: ['Ano ang puhunan at paano ito ilista?', 'What is capital (puhunan) and how do I record it?'],
+    a: ['Ang <b>puhunan</b> ay sariling pera mong inilagay sa negosyo. Owner lang: pindutin ang <b>+</b> → <b>💚 Kita</b> → piliin ang <b>👛 Dagdag puhunan</b>. Madadagdagan ang pera mo ngayon pero <b>hindi</b> ito ituturing na kita, para tama ang tubo.',
+      '<b>Capital</b> is your own money put into the business. Owner only: tap <b>+</b> → <b>💚 Money In</b> → choose <b>👛 Added capital</b>. Cash on hand goes up but it\'s <b>not</b> counted as income, so profit stays correct.'], go: 'add' },
+  { t: 'own', k: 'kinuha sarili personal withdraw owner draw pamilya',
+    q: ['Kumuha ako ng pera para sa sarili. Paano ilista?', 'I took money for personal use. How do I record it?'],
+    a: ['Owner lang: pindutin ang <b>+</b> → <b>🧡 Gastos</b> → piliin ang <b>👛 Kinuha ko para sa sarili</b>. Mababawasan ang pera mo ngayon pero <b>hindi</b> ito ituturing na gastos ng negosyo.',
+      'Owner only: tap <b>+</b> → <b>🧡 Expense</b> → choose <b>👛 Taken for personal use</b>. Cash on hand goes down but it\'s <b>not</b> counted as a business expense.'], go: 'add' },
+  { t: 'own', k: 'bakit hindi gastos kinuha withdrawal not expense',
+    q: ['Bakit hindi kasama sa gastos ang kinuha ko para sa sarili?', 'Why isn\'t money I took counted as an expense?'],
+    a: ['Ang <b>gastos</b> ay para patakbuhin ang negosyo (paninda, upa). Ang <b>kinuha mo</b> ay parte mo sa kinita — parang sahod mo. Kung isasama sa gastos, magmumukhang maliit ang tubo kahit maayos ang negosyo. Makikita mo pa rin ang kabuuang kinuha mo sa Ulat.',
+      '<b>Expenses</b> are for running the business (stock, rent). <b>What you took</b> is your share of the earnings — like your salary. If it were counted as an expense, profit would look small even when the business is doing well. You can still see the total you took in Reports.'] },
+  { t: 'own', k: 'ari arian asset gamit equipment freezer motor inventory paninda dagdag',
+    q: ['Ano ang Ari-arian at paano magdagdag?', 'What are assets and how do I add them?'],
+    a: ['Ang <b>ari-arian</b> ay mga gamit ng negosyo na may halaga — hal. freezer, motor, tindahan, o paninda sa estante. Owner lang: <b>📊 Ulat → Halaga ng Negosyo → ＋ Ari-arian</b>. Ilagay ang pangalan at tantiyang halaga ngayon.',
+      '<b>Assets</b> are things the business owns that have value — e.g. a freezer, motorcycle, store, or stock on the shelves. Owner only: <b>📊 Reports → Business worth → ＋ Asset</b>. Enter the name and its estimated value today.'], go: 'assets' },
+
+  // ---------- owner & staff ----------
+  { t: 'team', k: 'pin owner pin 4 digit password security',
+    q: ['Ano ang Owner PIN?', 'What is the Owner PIN?'],
+    a: ['Ito ang 4-digit na numero ng owner. Dito nalalaman ng Kwentoink na ikaw ang owner — kaya ikaw lang ang makakakita ng Ulat, makaka-edit ng lahat, at makakapagpalit ng settings. Huwag itong ibigay sa staff.',
+      'It\'s the owner\'s 4-digit number. It tells Kwentoink you\'re the owner — so only you can see Reports, edit everything and change settings. Don\'t share it with staff.'] },
+  { t: 'team', k: 'nakalimutan pin forgot reset palitan',
+    q: ['Nakalimutan ko ang PIN. Paano?', 'I forgot my PIN. What do I do?'],
+    a: ['Mag-message sa nagbigay sa iyo ng Kwentoink para i-reset ang PIN. Pagkatapos, buksan agad ang Kwentoink — hihingan ka ng bagong PIN. Ligtas ang lahat ng listahan mo.',
+      'Message whoever gave you Kwentoink to reset the PIN. Then open Kwentoink right away — it will ask you to create a new PIN. All your records are safe.'], go: 'support' },
+  { t: 'team', k: 'owner ibang phone unlock maging owner second device',
+    q: ['Paano maging owner sa ibang phone?', 'How do I become owner on another phone?'],
+    a: ['Sa phone na iyon: <b>Settings ⚙️ → Ako ang Owner</b> → ilagay ang PIN. Kailangan ng internet. Para bumalik sa staff mode: Settings → <b>Gawing Staff</b>.',
+      'On that phone: <b>Settings ⚙️ → I\'m the Owner</b> → enter the PIN. Internet is needed. To go back to staff mode: Settings → <b>Switch to Staff</b>.'], go: 'settings' },
+  { t: 'team', k: 'staff kaya lock naka lock bawal hindi ma edit permission',
+    q: ['Ano ang kaya ng staff? Bakit naka-🔒?', 'What can staff do? Why is it locked 🔒?'],
+    a: ['Ang staff ay pwedeng <b>magdagdag</b> ng kita, gastos, resibo, at bayad sa utang. Pero hindi nila ma-eedit ang listahan ng iba, hindi makikita ang Ulat at Tubo, at hindi mapapalitan ang settings. Ang pag-edit ng sarili nilang listahan ay depende sa patakaran ng owner.',
+      'Staff can <b>add</b> money in, expenses, receipts and credit payments. But they can\'t edit other people\'s records, can\'t see Reports or Profit, and can\'t change settings. Editing their own records depends on the owner\'s rule.'] },
+  { t: 'team', k: 'patakaran rule staff edit same day never always palitan',
+    q: ['Paano palitan ang patakaran sa pag-edit ng staff?', 'How do I change the staff editing rule?'],
+    a: ['Owner lang: <b>Settings ⚙️ → Pwede bang mag-edit ang staff?</b> Piliin: <b>Sa parehong araw lang</b>, <b>Hindi pwede</b>, o <b>Palagi (sariling listahan)</b>.',
+      'Owner only: <b>Settings ⚙️ → Can staff edit?</b> Choose: <b>Same day only</b>, <b>Never</b>, or <b>Always (own records)</b>.'], go: 'settings' },
+  { t: 'team', k: 'bell abiso notification alert staff edit bura',
+    q: ['Ano ang 🔔 sa itaas?', 'What is the 🔔 at the top?'],
+    a: ['Para sa owner: dito ka aabisuhan kapag may <b>in-edit o binura ang staff</b>. Makikita mo kung sino, ano, at kailan — pati ang dating halaga. Pwede ka ring makatanggap ng email: Settings → <b>Email para sa abiso</b>.',
+      'For the owner: you get notified here when <b>staff edit or delete something</b>. You see who, what and when — including the old amount. You can also get emails: Settings → <b>Email alerts</b>.'], go: 'alerts' },
+  { t: 'team', k: 'activity log kasaysayan sino nag edit history audit',
+    q: ['Paano makita kung sino ang nagdagdag o nag-edit?', 'How do I see who added or changed what?'],
+    a: ['Bawat listahan ay may "✍️ pangalan" ng naglista. Para sa buong kasaysayan: <b>Settings ⚙️ → Kasaysayan ng pagbabago</b>.',
+      'Every record shows "✍️ name" of who recorded it. For the full history: <b>Settings ⚙️ → Activity log</b>.'], go: 'log' },
+
+  // ---------- offline & sync ----------
+  { t: 'sync', k: 'offline walang internet no signal data gumagana',
+    q: ['Gumagana ba kahit walang internet?', 'Does it work without internet?'],
+    a: ['Oo! Naka-save muna sa phone ang lahat ng ilista mo, tapos kusa itong magsi-sync pag may internet na. Kailangan lang ng internet sa unang bukas, sa pag-check ng PIN, at sa pagtingin ng resibong galing sa ibang phone.',
+      'Yes! Everything you record is saved on the phone first, then synced automatically when you\'re back online. Internet is only needed the very first time, for checking the PIN, and for viewing receipts from other phones.'] },
+  { t: 'sync', k: 'sync badge synced naka save orange number ibig sabihin',
+    q: ['Ano ang ibig sabihin ng "✓ Synced na" o "⏳ 2" sa itaas?', 'What do "✓ Synced" or "⏳ 2" at the top mean?'],
+    a: ['<b>✓ Synced na</b> = naka-save na online ang lahat. <b>⏳ 2</b> = may 2 bagay pang isi-sync. <b>📴 Offline</b> = walang internet, pero naka-save sa phone. Pindutin ito para mag-sync ngayon.',
+      '<b>✓ Synced</b> = everything is saved online. <b>⏳ 2</b> = 2 items still waiting to sync. <b>📴 Offline</b> = no internet, but saved on the phone. Tap it to sync now.'] },
+  { t: 'sync', k: 'ligtas safe data saan naka save backup mawala lost',
+    q: ['Ligtas ba ang data ko? Saan ito naka-save?', 'Is my data safe? Where is it saved?'],
+    a: ['Naka-save ang lahat online sa sariling Google Sheet ng negosyo mo, at ang resibo sa sariling folder. Kahit masira o mawala ang phone, buksan lang ang link sa bagong phone at nandoon pa rin lahat.',
+      'Everything is saved online in your business\'s own Google Sheet, and receipts in their own folder. Even if the phone breaks or gets lost, open your link on a new phone and everything is still there.'] },
+  { t: 'sync', k: 'hindi nagsi sync not syncing stuck problema',
+    q: ['Hindi nagsi-sync. Ano ang gagawin?', 'It isn\'t syncing. What should I do?'],
+    a: ['1) Siguraduhing may internet. 2) Pindutin ang sync badge sa itaas o Settings → <b>I-sync ngayon</b>. 3) Isara at buksan ulit ang Kwentoink. Hindi mawawala ang naka-save sa phone habang hinihintay.',
+      '1) Make sure you have internet. 2) Tap the sync badge at the top or Settings → <b>Sync now</b>. 3) Close and reopen Kwentoink. Nothing saved on the phone is lost while it waits.'], go: 'settings' },
+
+  // ---------- tax & pricing ----------
+  { t: 'tax', k: 'vat 12 percent tax buwis value added',
+    q: ['Ano ang VAT?', 'What is VAT?'],
+    a: ['Ang <b>VAT</b> ay 12% na buwis na idinadagdag sa presyo ng mga <b>VAT-registered</b> na negosyo. Hindi ito tubo mo — kinokolekta mo lang ito para sa BIR. Kailangang mag-register sa VAT kapag lumampas sa ₱3 milyon ang benta sa isang taon.',
+      '<b>VAT</b> is a 12% tax added to prices by <b>VAT-registered</b> businesses. It\'s not your profit — you collect it for the BIR. A business must register for VAT when sales go over ₱3 million a year.'] },
+  { t: 'tax', k: 'dagdag 12 vat presyo kailangan ba add price non vat',
+    q: ['Kailangan ko bang magdagdag ng 12% VAT sa presyo?', 'Do I need to add 12% VAT to my prices?'],
+    a: ['<b>Kung non-VAT ka (karamihan ng maliit na negosyo): hindi.</b> Idadagdag lang ang 12% kung VAT-registered ka. At tandaan: hindi pwedeng puhunan + 12% lang — kailangan mo munang magdagdag ng <b>tubo</b>, saka ang VAT. Gamitin ang <b>🏷️ Presyo calculator</b>.',
+      '<b>If you\'re non-VAT (most small businesses): no.</b> Only add 12% if you\'re VAT-registered. And remember: it can\'t just be cost + 12% — add your <b>profit markup</b> first, then VAT. Use the <b>🏷️ Price calculator</b>.'], go: 'price' },
+  { t: 'tax', k: 'percentage tax 3 percent 8 percent income tax bir non vat',
+    q: ['Ano ang 3% percentage tax at 8% income tax?', 'What are the 3% percentage tax and 8% income tax?'],
+    a: ['Para sa <b>non-VAT</b> na negosyo: karaniwang <b>3% percentage tax</b> sa benta. O kaya, puwedeng piliin ang <b>8% income tax</b> sa benta na lampas ₱250,000 sa isang taon (kapalit ng 3% at ng regular na income tax). Itakda ito sa Settings → <b>Buwis</b> para makita ang tantiya sa Ulat. Tantiya lang ito — kumpirmahin sa accountant o BIR.',
+      'For <b>non-VAT</b> businesses: usually a <b>3% percentage tax</b> on sales. Or you may choose the <b>8% income tax</b> on sales above ₱250,000 a year (replacing the 3% and regular income tax). Set it in Settings → <b>Tax</b> to see an estimate in Reports. It\'s only an estimate — confirm with an accountant or the BIR.'], go: 'settings' },
+  { t: 'tax', k: 'presyo pricing markup tubo magkano benta price selling',
+    q: ['Paano malaman kung magkano ang ibebenta ko?', 'How do I decide my selling price?'],
+    a: ['Gamitin ang <b>🏷️ Presyo calculator</b> sa Home: ilagay ang puhunan kada piraso at kung ilang % na tubo ang gusto mo (hal. 30%). Ibibigay ko ang presyo at tubo kada piraso. Kung VAT-registered ka, idadagdag ko rin ang 12%.',
+      'Use the <b>🏷️ Price calculator</b> on Home: enter the cost per piece and how much profit you want (e.g. 30%). I\'ll give you the price and profit per piece. If you\'re VAT-registered, I add the 12% too.'], go: 'price' },
+  { t: 'tax', k: 'calculator kuwenta compute math',
+    q: ['Paano gamitin ang calculator?', 'How do I use the calculator?'],
+    a: ['Pindutin ang <b>🧮 Calculator</b> sa Home. Pagkatapos magkuwenta, pwede mong pindutin ang <b>Ilista ito</b> para diretsong ilagay ang sagot sa bagong listahan.',
+      'Tap <b>🧮 Calculator</b> on Home. After calculating, tap <b>Record this</b> to put the answer straight into a new record.'], go: 'calc' },
+
+  // ---------- bookkeeping words ----------
+  { t: 'words', k: 'asset liability equity balance meaning salita bookkeeping terms',
+    q: ['Ano ang asset, liability, at equity sa simpleng salita?', 'What are assets, liabilities and equity in plain words?'],
+    a: ['<b>Asset (ari-arian)</b> = lahat ng meron ang negosyo: pera, utang sa iyo, gamit, paninda. <b>Liability (utang)</b> = lahat ng utang ng negosyo. <b>Equity (halaga ng negosyo)</b> = Asset − Liability. Sa Kwentoink: Ulat → <b>Halaga ng Negosyo</b>.',
+      '<b>Asset</b> = everything the business owns: cash, money owed to you, equipment, stock. <b>Liability</b> = everything the business owes. <b>Equity</b> = Assets − Liabilities. In Kwentoink: Reports → <b>Business worth</b>.'] },
+  { t: 'words', k: 'revenue income expense profit loss salita meaning',
+    q: ['Ano ang revenue, expense, profit, at loss?', 'What are revenue, expense, profit and loss?'],
+    a: ['<b>Revenue/Income</b> = Kita. <b>Expense</b> = Gastos. <b>Profit</b> = Tubo (kapag mas malaki ang kita). <b>Loss</b> = Lugi (kapag mas malaki ang gastos).',
+      '<b>Revenue/Income</b> = Money In. <b>Expense</b> = money spent to run the business. <b>Profit</b> = when income is bigger. <b>Loss</b> = when expenses are bigger.'] },
+  { t: 'words', k: 'receivable payable accounts salita meaning',
+    q: ['Ano ang receivable at payable?', 'What are receivables and payables?'],
+    a: ['<b>Receivable</b> = pera na dapat bayaran SA IYO (Utang sa Akin). <b>Payable</b> = pera na dapat mong BAYARAN (Utang Ko).',
+      '<b>Receivable</b> = money owed TO YOU (Owed to Me). <b>Payable</b> = money YOU owe (I Owe).'] },
+  { t: 'words', k: 'gross net sales kabuuan meaning margin',
+    q: ['Ano ang gross at net?', 'What do gross and net mean?'],
+    a: ['<b>Gross</b> = kabuuan bago bawasan (hal. lahat ng benta). <b>Net</b> = natira pagkatapos bawasan (hal. tubo = benta − gastos).',
+      '<b>Gross</b> = the total before subtracting anything (e.g. all sales). <b>Net</b> = what\'s left after subtracting (e.g. profit = sales − expenses).'] },
+
+  // ---------- problems & account ----------
+  { t: 'fix', k: 'subscription trial bayad libre free plan expire',
+    q: ['Paano ang subscription at free trial?', 'How do the subscription and free trial work?'],
+    a: ['May libreng trial ka sa simula. Makikita kung ilang araw pa sa Settings → <b>Subscription</b>. Para magpatuloy, magbayad sa nagbigay sa iyo ng Kwentoink (hal. GCash).',
+      'You start with a free trial. See how many days are left in Settings → <b>Subscription</b>. To continue, pay whoever gave you Kwentoink (e.g. via GCash).'], go: 'support' },
+  { t: 'fix', k: 'paused naka pause ended hindi mabuksan locked expired',
+    q: ['Bakit naka-pause ang Kwentoink ko?', 'Why is my Kwentoink paused?'],
+    a: ['Tapos na ang trial o subscription. <b>Ligtas ang lahat ng listahan mo</b> — babalik ito pag na-renew. Makipag-ugnayan sa nagbigay sa iyo ng Kwentoink.',
+      'Your trial or subscription has ended. <b>All your records are safe</b> — they come back once renewed. Contact whoever gave you Kwentoink.'], go: 'support' },
+  { t: 'fix', k: 'contact support tulong help kausap message',
+    q: ['Paano makipag-ugnayan para sa tulong?', 'How do I contact support?'],
+    a: ['Makipag-ugnayan sa nagbigay sa iyo ng Kwentoink.', 'Contact whoever gave you Kwentoink.'], go: 'support' },
+  { t: 'fix', k: 'mabagal update luma refresh lumang version slow old',
+    q: ['Luma ang nakikita ko o mabagal. Ano gagawin?', 'I see old info or it\'s slow. What should I do?'],
+    a: ['Isara nang buo ang Kwentoink at buksan ulit. Kung may internet, kusa itong mag-a-update. Pindutin din ang sync badge sa itaas.',
+      'Close Kwentoink completely and open it again. With internet, it updates by itself. You can also tap the sync badge at the top.'] },
+  { t: 'fix', k: 'link hindi gumagana old link invalid bago',
+    q: ['Sabi "Hindi gumagana ang link na ito". Bakit?', 'It says "This link doesn\'t work". Why?'],
+    a: ['Baka napalitan na ang link (para sa seguridad). Humingi ng bagong link sa owner o sa nagbigay sa iyo ng Kwentoink. Hindi nawala ang data.',
+      'The link may have been replaced (for security). Ask the owner or whoever gave you Kwentoink for the new link. No data is lost.'] }
+];
+const HELP_STOP = new Set('ano ang ng sa mga paano ko ba na at the how what is a an to do i my ako po yung nga kung para can it this ito mo ka si ni kay din rin lang naman does why bakit saan where when kailan'.split(' '));
+const hnorm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/<[^>]+>/g, ' ').replace(/[^a-z0-9%₱ ]+/g, ' ');
+function helpSearch(q) {
+  const toks = hnorm(q).split(/\s+/).filter(w => w.length > 1 && !HELP_STOP.has(w));
+  if (!toks.length) return [];
+  return HELP.map((h, i) => {
+    const qw = hnorm(h.q[0] + ' ' + h.q[1]).split(/\s+/), kw = hnorm(h.k).split(/\s+/), body = hnorm(h.a[0] + ' ' + h.a[1]);
+    let sc = 0, hit = 0;
+    toks.forEach(t => {
+      let m = 0;
+      if (qw.some(w => w.startsWith(t))) m += 3;
+      if (kw.some(w => w.startsWith(t) || (t.length > 3 && w.startsWith(t.slice(0, -1))))) m += 3;
+      if (!m && body.includes(t)) m += 1;
+      if (m) hit++; sc += m;
+    });
+    if (hit === toks.length) sc += 2; // all words matched
+    return { i, sc };
+  }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 8);
+}
+const HELP_GO = {
+  install: ['📲', 'Paano mag-install', 'How to install', () => installGuide(true)],
+  settings: ['⚙️', 'Buksan ang Settings', 'Open Settings', () => go('settings')],
+  tour: ['🎓', 'Simulan ang tutorial', 'Start tutorial', () => ACTIONS.replayTour()],
+  add: ['➕', 'Maglista ngayon', 'Record now', () => { go('home'); setTimeout(() => openEntry(), 250); }],
+  list: ['📒', 'Buksan ang Listahan', 'Open Records', () => go('list')],
+  utang: ['🤝', 'Buksan ang Utang', 'Open Credit', () => go('utang')],
+  report: ['📊', 'Buksan ang Ulat', 'Open Reports', () => go('report')],
+  invoice: ['🧾', 'Gumawa ng singil', 'Make an invoice', () => openInvoiceForm()],
+  assets: ['🏦', 'Ari-arian', 'Assets', () => openAssets()],
+  price: ['🏷️', 'Presyo calculator', 'Price calculator', () => openPriceCalc()],
+  calc: ['🧮', 'Calculator', 'Calculator', () => openCalculator()],
+  alerts: ['🔔', 'Mga abiso', 'Notifications', () => go('alerts')],
+  log: ['📜', 'Kasaysayan', 'Activity log', () => { go('log'); loadLog(); }],
+  support: ['💬', 'Contact', 'Contact', null]
+};
+let helpState = { q: '', open: null, topic: null };
+function viewHelp() {
+  return '<h2>❓ ' + L('Tanong kay Kwento', 'Ask Kwento') + '</h2>' +
+    '<div class="hello"><div class="m">' + mascot('wave', 'hop') + '</div><div class="bubble">' + L('Ano ang gusto mong malaman, Bossing?', 'What would you like to know, Boss?') + '<small>' + L('I-type ang isang salita, hal. "utang", "resibo", "VAT", "PIN".', 'Type a word, e.g. "credit", "receipt", "VAT", "PIN".') + '</small></div></div>' +
+    '<input class="search" id="helpQ" autocomplete="off" placeholder="🔎 ' + L('I-type ang tanong o salita…', 'Type a question or word…') + '" value="' + esc(helpState.q) + '">' +
+    '<div id="helpBody"></div>';
+}
+function helpItemBtn(i) { const h = HELP[i]; return '<button class="opt" data-help="' + i + '" style="font-size:15px;padding:13px 14px"><span class="e" style="font-size:22px">' + HELP_TOPICS[h.t][0] + '</span><span>' + esc(h.q[LANG === 'tl' ? 0 : 1]) + '</span></button>'; }
+function paintHelp() {
+  const box = $('#helpBody'); if (!box) return;
+  const li = LANG === 'tl' ? 0 : 1;
+  let h = '';
+  if (helpState.open !== null) {
+    const it = HELP[helpState.open];
+    let ans = it.a[li];
+    if (it.go === 'support' && S.support) ans += '<div class="infobar">💬 ' + esc(S.support) + '</div>';
+    const g = HELP_GO[it.go];
+    h += '<div class="card"><div style="display:flex;gap:10px;align-items:flex-start"><div style="width:56px;flex:none">' + mascot('happy') + '</div><div><div class="b" style="font-size:17px;margin-bottom:6px">' + esc(it.q[li]) + '</div><div style="line-height:1.5;font-weight:600">' + ans + '</div></div></div>' +
+      (g && g[3] ? '<button class="btn main" id="helpGo" style="margin-top:12px">' + g[0] + ' ' + g[li + 1] + '</button>' : '') + '</div>';
+    const rel = HELP.map((x, i) => i).filter(i => HELP[i].t === it.t && i !== helpState.open).slice(0, 4);
+    h += '<h3>' + L('Iba pang tanong', 'Related questions') + '</h3><div class="opts">' + rel.map(helpItemBtn).join('') + '</div>' +
+      '<button class="btn soft" id="helpBack" style="margin-top:12px">← ' + L('Bumalik', 'Back') + '</button>';
+  } else if (helpState.q.trim()) {
+    const res = helpSearch(helpState.q);
+    h += res.length ? '<div class="small b muted" style="margin:0 4px 8px">' + L('Mungkahing tanong:', 'Suggested questions:') + '</div><div class="opts">' + res.map(r => helpItemBtn(r.i)).join('') + '</div>'
+      : '<div class="card empty"><div class="m">' + mascot('think') + '</div>' + L('Wala akong nakitang sagot diyan. Subukan ang ibang salita, o pumili ng paksa sa baba.', "I couldn't find an answer for that. Try another word, or pick a topic below.") +
+        (S.support ? '<div class="infobar">💬 ' + L('Kailangan pa ng tulong? ', 'Still need help? ') + esc(S.support) + '</div>' : '') + '</div>' + topicsHtml();
+  } else if (helpState.topic) {
+    const t = HELP_TOPICS[helpState.topic];
+    h += '<h3>' + t[0] + ' ' + t[li + 1] + '</h3><div class="opts">' + HELP.map((x, i) => i).filter(i => HELP[i].t === helpState.topic).map(helpItemBtn).join('') + '</div>' +
+      '<button class="btn soft" id="helpBack" style="margin-top:12px">← ' + L('Lahat ng paksa', 'All topics') + '</button>';
+  } else {
+    h += '<div class="small b muted" style="margin:0 4px 8px">' + L('Madalas itanong:', 'Popular questions:') + '</div><div class="opts">' + ['How do I get started?', 'How do I record a sale?', 'How do I record credit (utang)?', 'I took money for personal use. How do I record it?', 'Does it work without internet?', 'Do I need to add 12% VAT to my prices?'].map(t => HELP.findIndex(h => h.q[1] === t)).filter(i => i >= 0).map(helpItemBtn).join('') + '</div>' + topicsHtml();
+  }
+  box.innerHTML = h;
+  box.querySelectorAll('[data-help]').forEach(b => b.onclick = () => { helpState.open = +b.dataset.help; paintHelp(); window.scrollTo(0, 0); });
+  box.querySelectorAll('[data-topic]').forEach(b => b.onclick = () => { helpState.topic = b.dataset.topic; helpState.open = null; paintHelp(); });
+  const back = box.querySelector('#helpBack'); if (back) back.onclick = () => { if (helpState.open !== null) helpState.open = null; else helpState.topic = null; paintHelp(); };
+  const gb = box.querySelector('#helpGo'); if (gb) gb.onclick = () => HELP_GO[HELP[helpState.open].go][3]();
+}
+function topicsHtml() {
+  const li = LANG === 'tl' ? 1 : 2;
+  return '<h3>' + L('Mga paksa', 'Topics') + '</h3><div class="grid">' + Object.keys(HELP_TOPICS).map(k => '<button class="stat" data-topic="' + k + '" style="min-height:76px;background:var(--white);text-align:left"><span style="font-size:24px">' + HELP_TOPICS[k][0] + '</span><span class="lbl">' + HELP_TOPICS[k][li] + '</span></button>').join('') + '</div>';
+}
+function bindHelp() {
+  const q = $('#helpQ'); if (!q) return;
+  q.addEventListener('input', () => { helpState.q = q.value; helpState.open = null; helpState.topic = null; paintHelp(); });
+  paintHelp();
 }
 
 /* =================================================================
@@ -1682,6 +2400,7 @@ function tourSteps(kind) {
     { sel: '#c-out', tl: 'Ito ang <b>Gastos</b> — perang lumabas (paninda, pamasahe, bills).', en: 'These are your <b>Expenses</b> — money going out (stock, transport, bills).' },
     { sel: '#c-profit', tl: 'Ito ang <b>Tubo</b>. Kita bawas Gastos. Ako na ang nagkukuwenta! 🐃', en: 'This is your <b>Profit</b>: Money In minus Expenses. I do the math! 🐃' },
     { sel: '#cash-box', tl: 'Tantiya ng perang hawak mo ngayon.', en: 'An estimate of the cash you have right now.' },
+    { sel: '#tools', tl: 'Dito ang <b>Calculator</b>, <b>Presyo calculator</b> (para malaman ang tamang presyo), at <b>Tulong</b> kung may tanong ka.', en: 'Here are the <b>Calculator</b>, the <b>Price calculator</b> (to find the right price), and <b>Help</b> if you have questions.' },
     { sel: '#fab', action: 1, tl: 'Subukan natin! Pindutin ang <b>+</b> para maglista.', en: "Let's try it! Tap <b>+</b> to record something." },
     { sel: '#sh-type', tl: 'Piliin muna: <b>Kita</b> kung may pumasok na pera, <b>Gastos</b> kung may lumabas.', en: 'First choose: <b>Money In</b> for cash received, <b>Expense</b> for cash spent.' },
     { sel: '#sh-amt', tl: 'I-type dito ang halaga.', en: 'Type the amount here.' },
@@ -1690,13 +2409,14 @@ function tourSteps(kind) {
     { sel: '#sh-close', action: 1, tl: 'Ayan! Pindutin ang <b>×</b> para isara muna.', en: 'Great! Tap <b>×</b> to close it for now.' },
     { sel: '#nav-list', tl: 'Sa <b>Listahan</b> makikita lahat ng nailista, at kung sino ang naglista.', en: '<b>Records</b> shows everything recorded, and who recorded it.' },
     { sel: '#nav-utang', tl: 'Sa <b>Utang</b> ililista kung sino ang may utang sa iyo, at utang mo.', en: '<b>Credit</b> tracks who owes you, and who you owe.', skipIf: () => !S.settings.utangOn },
-    { sel: '#nav-report', tl: 'Sa <b>Ulat</b> makikita ang buwanang kita, at pwedeng i-download sa Excel o PDF.', en: '<b>Reports</b> shows your monthly results, with Excel or PDF download.' },
+    { sel: '#nav-report', tl: 'Sa <b>Ulat</b> makikita ang buwanang kita, halaga ng negosyo, at buwis — pwedeng i-download sa Excel o PDF. Ikaw lang ang nakakakita nito.', en: '<b>Reports</b> shows monthly results, business worth and tax — downloadable as Excel or PDF. Only you can see it.', skipIf: () => !isOwner() },
+    { sel: '#nav-help', tl: 'May tanong? Pindutin ang <b>Tulong</b> at i-type ang salita.', en: 'Questions? Tap <b>Help</b> and type a word.', skipIf: () => isOwner() },
     { sel: '#syncBadge', tl: 'Kahit walang internet, naka-save sa phone. Kusa itong magsi-sync mamaya.', en: 'No internet? It saves on the phone and syncs by itself later.' },
     { sel: '#btn-bell', tl: '🔔 Dito ka aabisuhan kapag may in-edit o binura ang staff.', en: '🔔 You get notified here when staff edit or delete something.', skipIf: () => !isOwner() },
     { sel: '#btn-settings', tl: 'Sa Settings: palitan ang wika, currency, ang patakaran sa staff, o <b>ulitin ang tutorial</b>.', en: 'Settings: change language, currency, staff rules, or <b>replay this tutorial</b>.' }
   ];
   if (kind === 'full') return full;
-  return full.filter(s => ['#fab', '#sh-type', '#sh-rcpt', '#sh-close', '#nav-list'].includes(s.sel)).map(s => s.sel === '#fab' ? Object.assign({}, s, { tl: 'Ganito maglista: pindutin ang <b>+</b>.', en: 'Here\'s how to record: tap <b>+</b>.' }) : s);
+  return full.filter(s => ['#tools', '#fab', '#sh-type', '#sh-rcpt', '#sh-close', '#nav-list', '#nav-help'].includes(s.sel)).map(s => s.sel === '#fab' ? Object.assign({}, s, { tl: 'Ganito maglista: pindutin ang <b>+</b>.', en: 'Here\'s how to record: tap <b>+</b>.' }) : s);
 }
 function runTour(kind) {
   return new Promise(resolve => {
