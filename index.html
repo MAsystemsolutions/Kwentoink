@@ -40,6 +40,7 @@ input,select,textarea{font:inherit;color:var(--navy)}
 .bizname{font-size:12px;color:var(--muted);font-weight:700;max-width:46vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .sp{flex:1}
 .top .tb{min-width:0;flex:1 1 auto;overflow:hidden}
+@media (max-width:430px){.top{gap:7px;padding-left:12px;padding-right:12px}.top img{width:34px;height:34px}.top .brand{font-size:17px}.top .iconbtn{width:38px;height:38px;font-size:18px}.sync{max-width:86px;padding:6px 8px}.top .demo-chip{display:none}}
 .top .tb .brand{white-space:nowrap}
 .top>*{flex-shrink:0}.top .tb{flex-shrink:1}
 .iconbtn{width:42px;height:42px;border-radius:14px;background:var(--white);display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
@@ -180,6 +181,18 @@ h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
 .coach .stepn{font-size:11px;color:var(--muted);font-weight:800}
 .tap-arrow{position:fixed;z-index:103;font-size:40px;pointer-events:none;animation:bounce 0.9s infinite}
 
+/* ---- owner / staff ---- */
+.iconbtn{position:relative}
+.belln{position:absolute;top:-5px;right:-5px;background:var(--pink);color:#fff;border-radius:99px;font-size:11px;font-weight:900;min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;box-shadow:0 0 0 2px var(--sky)}
+.lockbar{background:#fff3cd;border-radius:16px;padding:12px 14px;font-weight:800;font-size:14px;line-height:1.35;margin-bottom:12px}
+.infobar{background:var(--sky2);border-radius:14px;padding:10px 12px;font-weight:700;font-size:13px;color:var(--navy2);margin:10px 0}
+.alertcard{display:flex;align-items:center;gap:10px;background:#fff3cd;border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);margin-bottom:12px;font-weight:800}
+.role{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px;background:var(--sky2);color:var(--navy2);margin-left:4px;vertical-align:1px}
+.role.owner{background:var(--green);color:var(--green2)}
+.pinbox{display:flex;gap:10px;justify-content:center;margin:6px 0 14px}
+.pinbox input{width:58px;height:66px;border-radius:18px;border:3px solid var(--white);background:var(--white);text-align:center;font-size:30px;font-weight:900;box-shadow:var(--shadow);outline:0}
+.pinbox input:focus{border-color:#9cc5ee}
+
 /* ---- toast ---- */
 .toast{position:fixed;left:50%;bottom:calc(104px + var(--safeb));transform:translateX(-50%) translateY(20px);z-index:120;background:var(--white);border-radius:20px;padding:8px 14px 8px 8px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(44,62,107,.25);font-weight:900;opacity:0;transition:all .25s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translateX(-50%)}
@@ -201,6 +214,16 @@ h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
 .pernav{display:flex;align-items:center;justify-content:space-between;background:var(--white);border-radius:18px;padding:6px;box-shadow:var(--shadow);margin-bottom:12px}
 .pernav button{width:44px;height:40px;border-radius:12px;background:var(--sky2);font-weight:900;font-size:18px}
 .pernav b{font-size:16px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.tbl td{padding:8px 2px;border-bottom:1px dashed var(--line);vertical-align:top}
+.tbl td.r{text-align:right;font-weight:800;white-space:nowrap}
+.tbl td.in{color:var(--green2)} .tbl td.out{color:var(--pink)}
+.tbl tr.hd td{font-weight:900;font-size:12px;color:var(--muted);padding-top:12px}
+.tbl tr.sub td{font-weight:900;background:var(--sky2)}
+.tbl tr.tot td{font-weight:900;font-size:16px;border-top:2px solid var(--navy);border-bottom:0;padding-top:10px}
+details summary{cursor:pointer;list-style:none} details summary::-webkit-details-marker{display:none}
+details summary:after{content:" ▾";color:var(--muted)} details[open] summary:after{content:" ▴"}
 
 /* ---- utang ---- */
 .ut{padding:12px 4px;border-bottom:1px dashed var(--line)}
@@ -266,6 +289,7 @@ h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
       <div class="bizname" id="bizName"></div>
     </div>
     <div class="sync ok" id="syncBadge">✓</div>
+    <button class="iconbtn hidden" id="btn-bell" aria-label="Notifications">🔔<span class="belln hidden" id="bellN"></span></button>
     <button class="iconbtn" id="btn-settings" aria-label="Settings">⚙️</button>
   </div>
   <div id="view"></div>
@@ -288,7 +312,7 @@ h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
 const API_URL = 'https://script.google.com/macros/s/AKfycbwtNzMjBvyWxUDpFdPjF69wUlKkVW099st_29zvTVqeCJckM-FOLuUTgRXqCq99wxnE/exec';
 // =========================================================
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const qs = new URLSearchParams(location.search);
 // Remember the link code on this phone, so the installed app (Android) opens the right business
 const CODE = (() => {
@@ -454,6 +478,32 @@ const catName = c => c.name || c[LANG] || c.en || c.k;
 const myName = () => LS.get(K('name'), '') || '';
 const isOwnerDevice = () => !!LS.get(K('owner'), false);
 
+/* ---------- owner PIN & staff limits ---------- */
+const pinKey = () => LS.get(K('pin'), '');
+const isOwner = () => !!pinKey();               // owner mode unlocked on this phone
+async function pinHash(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kwentoink:' + pin));
+  return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const staffMode = () => (S.settings && S.settings.staffEdit) || 'today';
+const STAFF_MODES = {
+  today: ['📅', 'Sa parehong araw lang', 'Same day only', 'Pwedeng ayusin ng staff ang sarili nilang listahan ngayong araw lang.', 'Staff can fix their own records on the same day only.'],
+  never: ['🚫', 'Hindi pwede', 'Never', 'Magdagdag lang ang staff. Owner ang mag-aayos ng mali.', 'Staff can only add. The owner fixes mistakes.'],
+  always: ['✏️', 'Palagi (sariling listahan)', 'Always (own records)', 'Pwedeng i-edit o burahin ng staff ang sarili nilang listahan. Aabisuhan ka.', 'Staff can edit or delete their own records. You get notified.']
+};
+// why a record is locked for this phone ('' = can edit)
+function lockReason(rec) {
+  if (!rec || isOwner()) return '';
+  const m = staffMode();
+  if (m === 'never') return L('🔒 Owner lang ang pwedeng mag-edit o magbura. Kung may mali, sabihan si Owner.', '🔒 Only the owner can edit or delete. Tell the owner if something is wrong.');
+  if (rec.device !== deviceId) return L('🔒 Si ' + (rec.by || 'ibang tao') + ' ang naglista nito. Owner lang ang pwedeng mag-edit.', '🔒 ' + (rec.by || 'Someone else') + ' recorded this. Only the owner can edit it.');
+  if (m === 'today' && !(rec.createdAt && ymd(new Date(rec.createdAt)) === today())) return L('🔒 Pwede lang i-edit sa parehong araw. Sabihan si Owner kung may mali.', '🔒 Records can only be fixed on the same day. Tell the owner if something is wrong.');
+  return '';
+}
+const canEdit = rec => !lockReason(rec);
+const staffChanges = () => (S.log || []).filter(r => r.role === 'staff' && (r.action === 'edit' || r.action === 'delete'));
+const unseenAlerts = () => { const seen = LS.get(K('seen'), ''); return staffChanges().filter(r => String(r.time) > seen); };
+
 /* =================================================================
    MASCOT (drawn in code — loads instantly, works offline)
    ================================================================= */
@@ -528,20 +578,36 @@ function mockApi(b) {
   const db = LS.get(key, { settings: null, entries: [], utang: [], log: [], receipts: {} });
   const save = () => LS.set(key, db);
   const trialEnds = new Date(); trialEnds.setDate(trialEnds.getDate() + 14);
-  const payload = () => ({ ok: true, sub: { state: 'trial', daysLeft: 14, until: ymd(trialEnds) }, support: 'Demo mode', grace: 7, settings: db.settings, entries: db.entries, utang: db.utang });
+  const own = p => !!(p && db.pinHash && p === db.pinHash);
+  const payload = () => ({ ok: true, pinSet: !!db.pinHash, pinOk: own(b.pin || b.pinHash), sub: { state: 'trial', daysLeft: 14, until: ymd(trialEnds) }, support: 'Demo mode', grace: 7, settings: db.settings, entries: db.entries, utang: db.utang });
+  const allowed = op => {
+    if (own(b.pin)) return true;
+    if (op.op === 'settings') return false;
+    const ex = db[op.table].find(x => x.id === op.rec.id); if (!ex) return true;
+    const r = op.rec, same = ks => ks.every(k => String(ex[k]) === String(r[k]));
+    if (op.action === 'receipt' && same(['amount', 'type', 'cat', 'date', 'deleted'])) return true;
+    if (op.table === 'utang' && op.action === 'pay' && same(['name', 'amount', 'kind'])) return true;
+    const m = (db.settings && db.settings.staffEdit) || 'today';
+    if (m === 'never' || ex.device !== op.device) return false;
+    return m === 'always' || (ex.createdAt && ymd(new Date(ex.createdAt)) === today());
+  };
   return new Promise(res => setTimeout(() => {
     if (b.action === 'init') return res(payload());
-    if (b.action === 'setup') { db.settings = Object.assign({}, b.settings, { setupDone: true }); db.log.unshift({ time: nowIso(), by: b.by, action: 'setup', summary: b.settings.businessName }); save(); return res(payload()); }
+    if (b.action === 'setup') { if (!(db.settings && db.settings.setupDone)) { db.settings = Object.assign({}, b.settings, { setupDone: true }); db.pinHash = b.pinHash || ''; db.log.unshift({ time: nowIso(), by: b.by, action: 'setup', summary: b.settings.businessName, role: 'owner' }); save(); } return res(payload()); }
+    if (b.action === 'verifyPin') return res({ ok: true, valid: own(b.pinHash) });
+    if (b.action === 'setPin') { if (db.pinHash && !own(b.oldPinHash)) return res({ ok: false, error: 'PIN_EXISTS' }); db.pinHash = b.pinHash; save(); return res(payload()); }
     if (b.action === 'sync') {
+      const rejected = [];
       (b.ops || []).forEach(op => {
+        if (!allowed(op)) { rejected.push({ id: op.rec && op.rec.id, action: op.action }); return; }
         if (op.op === 'settings') db.settings = Object.assign({}, db.settings, op.data);
         else {
           const arr = db[op.table]; const i = arr.findIndex(x => x.id === op.rec.id);
           if (i >= 0) { if (!(op.rec.updatedAt < arr[i].updatedAt)) arr[i] = op.rec; } else arr.push(op.rec);
         }
-        db.log.unshift({ time: op.at, by: op.by, action: op.action || op.op, table: op.table, summary: op.summary });
+        db.log.unshift({ time: op.at, by: op.by, action: op.action || op.op, table: op.table, summary: op.summary, role: own(b.pin) ? 'owner' : 'staff' });
       });
-      db.log = db.log.slice(0, 300); save(); return res(payload());
+      db.log = db.log.slice(0, 300); save(); return res(Object.assign(payload(), { rejected }));
     }
     if (b.action === 'receipt') { const id = 'demo_' + uid(); try { db.receipts[id] = { mime: b.mime, data: b.data.length < 900000 ? b.data : '' }; save(); } catch (e) { } return res({ ok: true, fileId: id }); }
     if (b.action === 'getReceipt') { const r = db.receipts[b.fileId] || {}; return res({ ok: true, mime: r.mime, data: r.data || '' }); }
@@ -555,7 +621,7 @@ function mockApi(b) {
    ================================================================= */
 async function loadCache() {
   const d = await DB.get(K('data'));
-  if (d) Object.assign(S, { settings: d.settings, entries: d.entries || [], utang: d.utang || [], sub: d.sub, support: d.support || '', grace: d.grace || 7, lastOk: d.lastOk || 0 });
+  if (d) Object.assign(S, { settings: d.settings, entries: d.entries || [], utang: d.utang || [], sub: d.sub, support: d.support || '', grace: d.grace || 7, lastOk: d.lastOk || 0, pinSet: d.pinSet });
   S.ops = (await DB.get(K('ops'))) || [];
   S.rq = (await DB.get(K('rq'))) || [];
   S.log = (await DB.get(K('log'))) || [];
@@ -563,7 +629,7 @@ async function loadCache() {
   return !!d;
 }
 function saveCache() {
-  return DB.set(K('data'), { settings: S.settings, entries: S.entries, utang: S.utang, sub: S.sub, support: S.support, grace: S.grace, lastOk: S.lastOk });
+  return DB.set(K('data'), { settings: S.settings, entries: S.entries, utang: S.utang, sub: S.sub, support: S.support, grace: S.grace, lastOk: S.lastOk, pinSet: S.pinSet });
 }
 function applyServer(j) {
   S.settings = j.settings || S.settings;
@@ -572,6 +638,9 @@ function applyServer(j) {
   S.utang = j.utang || [];
   S.sub = j.sub; S.support = j.support || S.support; S.grace = j.grace || 7;
   S.lastOk = Date.now();
+  if (j.pinSet !== undefined) S.pinSet = j.pinSet;
+  // PIN was changed or reset (e.g. from the admin page) — this phone goes back to staff mode
+  if (pinKey() && j.pinOk === false && j.sub && j.sub.state !== 'invalid') { LS.del(K('pin')); setTimeout(() => toast(L('Napalitan ang Owner PIN. Ilagay ulit sa Settings.', 'The Owner PIN changed. Enter it again in Settings.'), 'think'), 800); }
   ensureLocalPending();
 }
 // re-apply changes that haven't reached the server yet
@@ -613,11 +682,13 @@ async function flush(force) {
     }
     // 2) send changes, get everyone's latest records back
     const sending = S.ops.slice();
-    const j = await api('sync', { ops: sending.map(o => { const c = Object.assign({}, o); if (c.rec) { c.rec = Object.assign({}, c.rec); delete c.rec.receiptLocal; } return c; }) });
+    const j = await api('sync', { pin: pinKey(), ops: sending.map(o => { const c = Object.assign({}, o); if (c.rec) { c.rec = Object.assign({}, c.rec); delete c.rec.receiptLocal; } return c; }) });
     const sent = new Set(sending.map(o => o.uid));
     S.ops = S.ops.filter(o => !sent.has(o.uid));
     await DB.set(K('ops'), S.ops);
     applyServer(j); await saveCache();
+    if (j.rejected && j.rejected.length) toast(L('May ' + j.rejected.length + ' pagbabago na hindi pinayagan — Owner lang ang pwede.', j.rejected.length + ' change(s) not allowed — owner only.'), 'sad');
+    if (isOwner() && sending.length) loadLog();
     gateCheck();
     if (!document.querySelector('.sheet.show') && !tourActive && !document.querySelector('.screen')) render();
     if (S.ops.length || S.rq.length) setTimeout(flush, 400); // changes made while we were syncing
@@ -732,10 +803,16 @@ function go(v) {
 function render() {
   if (!S.settings) return;
   $('#bizName').textContent = S.settings.businessName || '';
-  setNavLabels(); updateSyncBadge();
-  const v = { home: viewHome, list: viewList, utang: viewUtang, report: viewReport, settings: viewSettings, log: viewLog }[S.view] || viewHome;
+  setNavLabels(); updateSyncBadge(); updateBell();
+  const v = { home: viewHome, list: viewList, utang: viewUtang, report: viewReport, settings: viewSettings, log: viewLog, alerts: viewAlerts }[S.view] || viewHome;
   $('#view').innerHTML = '<div class="view">' + v() + '</div>';
   bindView();
+}
+function updateBell() {
+  const b = $('#btn-bell'); if (!b) return;
+  b.classList.toggle('hidden', !isOwner());
+  const n = isOwner() ? unseenAlerts().length : 0;
+  const c = $('#bellN'); c.textContent = n > 9 ? '9+' : n; c.classList.toggle('hidden', !n);
 }
 function bindView() {
   $$('#view [data-act]').forEach(el => el.addEventListener('click', ev => {
@@ -768,7 +845,9 @@ function viewHome() {
   const recent = live(S.entries).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)).slice(0, 5);
   const sub = S.sub && S.sub.state === 'trial' && S.sub.daysLeft <= 5
     ? '<div class="card small b" style="background:#fff3cd">⏳ ' + L('Free trial: ' + S.sub.daysLeft + ' araw na lang', 'Free trial: ' + S.sub.daysLeft + ' days left') + '</div>' : '';
-  return '<div class="hello"><div class="m">' + mascot(mood, 'hop') + '</div><div class="bubble">' + greet() + '<small>' + tip + '</small></div></div>' + sub +
+  const na = isOwner() ? unseenAlerts().length : 0;
+  const alert = na ? '<div class="alertcard" data-act="go" data-arg="alerts"><span style="font-size:24px">🔔</span><span style="flex:1">' + L(na + ' pagbabago ng staff (edit/bura)', na + ' staff change(s) (edit/delete)') + '</span><span>' + L('Tingnan', 'View') + ' →</span></div>' : '';
+  return '<div class="hello"><div class="m">' + mascot(mood, 'hop') + '</div><div class="bubble">' + greet() + '<small>' + tip + '</small></div></div>' + alert + sub +
     '<div class="chips">' + Object.keys(pl).map(k => '<button class="chip ' + (S.period === k ? 'on' : '') + '" data-act="period" data-arg="' + k + '">' + pl[k] + '</button>').join('') + '</div>' +
     '<div class="grid">' +
     '<div class="stat s-in" id="c-in"><span class="em">💚</span><div class="lbl">' + L('Kita', 'Money In') + '</div><div><div class="amt">' + money(T.inn) + '</div><div class="sub">' + pl[S.period] + '</div></div></div>' +
@@ -806,85 +885,204 @@ function viewList() {
   });
   return h;
 }
+/* ---------- utang helpers (cash or hulugan) ---------- */
+const FREQ = { week: [7, 'Lingguhan', 'Weekly'], half: [15, 'Kada 15 araw', 'Every 15 days'], month: [0, 'Buwanan', 'Monthly'] };
+function addFreq(dateStr, f, n) {
+  const d = parseYmd(dateStr);
+  if (f === 'month') { const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); }
+  else d.setDate(d.getDate() + FREQ[f][0] * n);
+  return ymd(d);
+}
+function makeSchedule(total, count, freq, first) {
+  const base = Math.floor(total / count * 100) / 100, arr = []; let sum = 0;
+  for (let i = 0; i < count; i++) {
+    const amt = i === count - 1 ? Math.round((total - sum) * 100) / 100 : base;
+    sum += amt; arr.push({ n: i + 1, due: addFreq(first, freq, i), amt });
+  }
+  return arr;
+}
+function schedState(u) {
+  let left = u.paid || 0;
+  const rows = (u.schedule || []).map(x => { const p = Math.min(left, x.amt); left -= p; return Object.assign({}, x, { paidAmt: Math.round(p * 100) / 100, done: p >= x.amt - 0.005 }); });
+  return { rows, next: rows.find(r => !r.done), doneN: rows.filter(r => r.done).length };
+}
+const isInstall = u => u.ptype === 'install' && (u.schedule || []).length;
+function nextDue(u) { if (u.status === 'paid') return ''; if (isInstall(u)) { const st = schedState(u); return st.next ? st.next.due : ''; } return u.due || ''; }
+function nextAmt(u) { const left = u.amount - (u.paid || 0); if (isInstall(u)) { const n = schedState(u).next; return n ? Math.round((n.amt - n.paidAmt) * 100) / 100 : left; } return left; }
+
 function viewUtang() {
-  const k = S.utKind;
-  const arr = live(S.utang).filter(u => u.kind === k).sort((a, b) => (a.status === 'paid') - (b.status === 'paid') || String(a.due || '9').localeCompare(String(b.due || '9')));
-  const t = today();
+  const k = S.utKind, t = today();
+  const arr = live(S.utang).filter(u => u.kind === k).sort((a, b) => (a.status === 'paid') - (b.status === 'paid') || String(nextDue(a) || '9').localeCompare(String(nextDue(b) || '9')));
+  const open = arr.filter(u => u.status !== 'paid');
+  const overdue = open.filter(u => nextDue(u) && nextDue(u) < t);
+  const wk = addFreq(t, 'week', 1);
+  const dueSoon = open.filter(u => nextDue(u) >= t && nextDue(u) <= wk).reduce((a, u) => a + nextAmt(u), 0);
   let h = '<h2>🤝 Utang</h2><div class="seg"><button class="' + (k === 'owed' ? 'on n' : '') + '" data-act="utkind" data-arg="owed">' + L('Utang sa Akin', 'Owed to Me') + '</button><button class="' + (k === 'owe' ? 'on n' : '') + '" data-act="utkind" data-arg="owe">' + L('Utang Ko', 'I Owe') + '</button></div>' +
     '<div class="card" style="background:' + (k === 'owed' ? 'var(--rose)' : '#efe9ff') + '"><div class="small b">' + (k === 'owed' ? L('Kabuuang may utang sa iyo', 'Total others owe you') : L('Kabuuang utang mo', 'Total you owe')) + '</div><div style="font-size:26px;font-weight:900">' + money(utangSum(k)) + '</div>' +
+    '<div class="small b" style="margin-top:6px">⏰ ' + L('Babayaran sa loob ng 7 araw', 'Due in the next 7 days') + ': ' + money(dueSoon) + (overdue.length ? ' · <span style="color:var(--pink)">' + overdue.length + ' ' + L('lampas na', 'overdue') + '</span>' : '') + '</div>' +
     '<div class="small muted b" style="margin-top:4px">' + (k === 'owed' ? L('Kapag nagbayad sila, kusa itong maililista bilang Kita.', 'When they pay, it is recorded as Money In automatically.') : L('Kapag nagbayad ka, kusa itong maililista bilang Gastos.', 'When you pay, it is recorded as an Expense automatically.')) + '</div></div>' +
     '<button class="btn pink" data-act="addUtang" style="margin-bottom:12px">+ ' + (k === 'owed' ? L('Bagong may utang sa akin', 'Someone owes me') : L('Bagong utang ko', 'New debt I owe')) + '</button>';
   if (!arr.length) return h + '<div class="card empty"><div class="m">' + mascot('happy') + '</div>' + L('Walang utang dito. Yehey!', 'No credit here. Yay!') + '</div>';
   h += '<div class="card" style="padding:4px 14px">' + arr.map(u => {
     const left = u.amount - (u.paid || 0), pct = Math.min(100, Math.round((u.paid || 0) / u.amount * 100) || 0);
-    const late = u.status !== 'paid' && u.due && u.due < t;
+    const nd = nextDue(u), late = nd && nd < t;
+    let info;
+    if (isInstall(u)) { const st = schedState(u); info = '📆 ' + L('Hulugan', 'Installment') + ' ' + st.doneN + '/' + u.schedule.length + (st.next ? ' · ' + L('Susunod', 'Next') + ': ' + money(nextAmt(u)) + ' · ' + prettyDate(st.next.due) : ''); }
+    else info = '💵 ' + L('Isang bayaran', 'One payment') + ' · ' + money(u.amount) + (u.due && u.status !== 'paid' ? ' · ' + L('Due', 'Due') + ' ' + prettyDate(u.due) : '');
     return '<div class="ut" data-act="openUtang" data-arg="' + u.id + '"><div class="r1"><span>' + esc(u.name) + '</span><span>' + (u.status === 'paid' ? '<span class="tag ok">✓ ' + L('Bayad na', 'Paid') + '</span>' : money(left)) + '</span></div>' +
-      '<div class="r2">' + money(u.amount) + (u.due ? ' · ' + L('Due', 'Due') + ' ' + prettyDate(u.due) : '') + (late ? ' · <span class="tag">' + L('Lampas na', 'Overdue') + '</span>' : '') + (u.note ? ' · ' + esc(u.note) : '') + '</div>' +
+      '<div class="r2">' + info + (late ? ' · <span class="tag">' + L('Lampas na', 'Overdue') + '</span>' : '') + (u.note ? ' · ' + esc(u.note) : '') + '</div>' +
       '<div class="prog"><i style="width:' + pct + '%"></i></div></div>';
   }).join('') + '</div>';
   return h;
 }
-function viewReport() {
+
+function pctChange(now, before) {
+  if (!before) return '';
+  const p = Math.round((now - before) / Math.abs(before) * 100);
+  return '<span class="small b" style="color:' + (p >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + (p >= 0 ? '▲ ' : '▼ ') + Math.abs(p) + '%</span>';
+}
+function reportRange() {
   if (!S.repMonth) S.repMonth = today().slice(0, 7);
   const isYear = S.repMode === 'year';
   const y = +S.repMonth.slice(0, 4), m = +S.repMonth.slice(5, 7);
-  const from = isYear ? y + '-01-01' : S.repMonth + '-01';
   const lastDay = new Date(y, m, 0).getDate();
+  const from = isYear ? y + '-01-01' : S.repMonth + '-01';
   const to = isYear ? y + '-12-31' : S.repMonth + '-' + pad(lastDay);
-  const T = totals(from, to);
+  const pd = isYear ? new Date(y - 1, 0, 1) : new Date(y, m - 2, 1);
+  const pFrom = isYear ? (y - 1) + '-01-01' : pd.getFullYear() + '-' + pad(pd.getMonth() + 1) + '-01';
+  const pTo = isYear ? (y - 1) + '-12-31' : pd.getFullYear() + '-' + pad(pd.getMonth() + 1) + '-' + pad(new Date(pd.getFullYear(), pd.getMonth() + 1, 0).getDate());
   const title = isYear ? String(y) : MONTHS_FULL[LANG][m - 1] + ' ' + y;
-  const ents = live(S.entries).filter(e => e.date >= from && e.date <= to);
-  // bars
-  const n = isYear ? 12 : lastDay; const bi = Array(n).fill(0), bo = Array(n).fill(0);
-  ents.forEach(e => { const i = isYear ? +e.date.slice(5, 7) - 1 : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
-  const mx = Math.max(1, ...bi, ...bo);
-  const bars = '<div class="bars">' + bi.map((v, i) => '<div class="bar" title="' + money(v) + ' / ' + money(bo[i]) + '"><i class="in" style="height:' + (v / mx * 100) + '%"></i><i class="out" style="height:' + (bo[i] / mx * 100) + '%"></i></div>').join('') + '</div>' +
-    '<div class="barlbl">' + bi.map((v, i) => '<span>' + (isYear ? MONTHS[LANG][i].slice(0, 1) : ((i + 1) % 5 === 0 || i === 0 ? i + 1 : '')) + '</span>').join('') + '</div>' +
-    '<div class="legend"><span><i style="background:#7fd19a"></i>' + L('Kita', 'Money In') + '</span><span><i style="background:#ffb39a"></i>' + L('Gastos', 'Expenses') + '</span></div>';
-  const byCat = type => {
-    const g = {}; ents.filter(e => e.type === type).forEach(e => g[e.cat] = (g[e.cat] || 0) + +e.amount);
-    const tot = Object.values(g).reduce((a, b) => a + b, 0) || 1;
-    const rows = Object.keys(g).sort((a, b) => g[b] - g[a]);
-    if (!rows.length) return '<div class="muted small b">' + L('Wala pa', 'None yet') + '</div>';
-    return rows.map(k => { const c = catOf(k); return '<div class="hbar"><div class="h"><span>' + c.i + ' ' + esc(catName(c)) + '</span><span>' + money(g[k]) + '</span></div><div class="track"><div class="fill" style="width:' + (g[k] / tot * 100) + '%;background:' + (type === 'in' ? '#7fd19a' : '#ffb39a') + '"></div></div></div>'; }).join('');
+  return { isYear, y, m, lastDay, from, to, pFrom, pTo, title, prevTitle: isYear ? String(y - 1) : MONTHS_FULL[LANG][pd.getMonth()] };
+}
+function reportData() {
+  const R = reportRange();
+  const ents = live(S.entries).filter(e => e.date >= R.from && e.date <= R.to);
+  const T = totals(R.from, R.to), P = totals(R.pFrom, R.pTo);
+  const group = (key, type) => { const g = {}; ents.filter(e => !type || e.type === type).forEach(e => { const k = key(e); g[k] = g[k] || { inn: 0, out: 0, n: 0 }; g[k].n++; if (e.type === 'in') g[k].inn += +e.amount; else g[k].out += +e.amount; }); return g; };
+  const t = today();
+  const ut = live(S.utang).filter(u => u.status !== 'paid');
+  const owed = ut.filter(u => u.kind === 'owed'), owe = ut.filter(u => u.kind === 'owe');
+  const late = arr => arr.filter(u => nextDue(u) && nextDue(u) < t);
+  const sumLeft = arr => arr.reduce((a, u) => a + (u.amount - (u.paid || 0)), 0);
+  const dueIn = arr => arr.filter(u => nextDue(u) >= R.from && nextDue(u) <= R.to).reduce((a, u) => a + nextAmt(u), 0);
+  return {
+    R, ents, T, P,
+    catIn: group(e => e.cat, 'in'), catOut: group(e => e.cat, 'out'),
+    byMethod: group(e => e.method || 'cash'), byPerson: group(e => e.by || '?'),
+    byDay: group(e => R.isYear ? e.date.slice(0, 7) : e.date),
+    ut: { owed, owe, owedLeft: sumLeft(owed), oweLeft: sumLeft(owe), owedLate: late(owed), oweLate: late(owe), owedDue: dueIn(owed), oweDue: dueIn(owe) },
+    noReceipt: ents.filter(e => e.type === 'out' && !e.receiptId && !e.receiptLocal).length
   };
-  return '<div class="printhead"><b style="font-size:20px">' + esc(S.settings.businessName) + '</b> — ' + L('Ulat', 'Report') + ': ' + title + '</div>' +
+}
+function viewReport() {
+  const D = reportData(), R = D.R, T = D.T;
+  // bars
+  const n = R.isYear ? 12 : R.lastDay, bi = Array(n).fill(0), bo = Array(n).fill(0);
+  D.ents.forEach(e => { const i = R.isYear ? +e.date.slice(5, 7) - 1 : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
+  const mx = Math.max(1, ...bi, ...bo);
+  const bars = '<div class="bars">' + bi.map((v, i) => '<div class="bar"><i class="in" style="height:' + (v / mx * 100) + '%"></i><i class="out" style="height:' + (bo[i] / mx * 100) + '%"></i></div>').join('') + '</div>' +
+    '<div class="barlbl">' + bi.map((v, i) => '<span>' + (R.isYear ? MONTHS[LANG][i].slice(0, 1) : ((i + 1) % 5 === 0 || i === 0 ? i + 1 : '')) + '</span>').join('') + '</div>' +
+    '<div class="legend"><span><i style="background:#7fd19a"></i>' + L('Kita', 'Money In') + '</span><span><i style="background:#ffb39a"></i>' + L('Gastos', 'Expenses') + '</span></div>';
+  // P&L statement
+  const catRows = (g, type) => Object.keys(g).sort((a, b) => (g[b].inn + g[b].out) - (g[a].inn + g[a].out)).map(k => { const c = catOf(k); return '<tr><td>' + c.i + ' ' + esc(catName(c)) + '</td><td class="r">' + money(type === 'in' ? g[k].inn : g[k].out) + '</td></tr>'; }).join('') || '<tr><td class="muted">' + L('Wala pa', 'None yet') + '</td><td></td></tr>';
+  const pl = '<table class="tbl"><tr class="hd"><td>💚 ' + L('KITA', 'MONEY IN') + '</td><td></td></tr>' + catRows(D.catIn, 'in') +
+    '<tr class="sub"><td>' + L('Kabuuang Kita', 'Total Money In') + '</td><td class="r">' + money(T.inn) + '</td></tr>' +
+    '<tr class="hd"><td>🧡 ' + L('GASTOS', 'EXPENSES') + '</td><td></td></tr>' + catRows(D.catOut, 'out') +
+    '<tr class="sub"><td>' + L('Kabuuang Gastos', 'Total Expenses') + '</td><td class="r">' + money(T.out) + '</td></tr>' +
+    '<tr class="tot"><td>🐃 ' + L('TUBO (NET)', 'NET PROFIT') + '</td><td class="r" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</td></tr></table>';
+  // expense bars
+  const totOut = T.out || 1;
+  const expBars = Object.keys(D.catOut).sort((a, b) => D.catOut[b].out - D.catOut[a].out).map(k => { const c = catOf(k), v = D.catOut[k].out; return '<div class="hbar"><div class="h"><span>' + c.i + ' ' + esc(catName(c)) + '</span><span>' + Math.round(v / totOut * 100) + '%</span></div><div class="track"><div class="fill" style="width:' + (v / totOut * 100) + '%;background:#ffb39a"></div></div></div>'; }).join('') || '<div class="muted small b">' + L('Wala pa', 'None yet') + '</div>';
+  // by method
+  const mRows = Object.keys(D.byMethod).map(k => { const g = D.byMethod[k], mm = METHODS[k] || ['💳', k]; return '<tr><td>' + mm[0] + ' ' + mm[1] + '</td><td class="r in">+' + money(g.inn) + '</td><td class="r out">−' + money(g.out) + '</td></tr>'; }).join('') || '<tr><td class="muted">' + L('Wala pa', 'None yet') + '</td></tr>';
+  // by person
+  const pRows = Object.keys(D.byPerson).sort((a, b) => D.byPerson[b].n - D.byPerson[a].n).map(k => { const g = D.byPerson[k]; return '<tr><td>✍️ ' + esc(k) + '<div class="small muted b">' + g.n + ' ' + L('listahan', 'records') + '</div></td><td class="r in">+' + money(g.inn) + '</td><td class="r out">−' + money(g.out) + '</td></tr>'; }).join('') || '<tr><td class="muted">' + L('Wala pa', 'None yet') + '</td></tr>';
+  // daily / monthly table
+  const keys = Object.keys(D.byDay).sort().reverse();
+  const dRows = keys.map(k => { const g = D.byDay[k]; const lbl = R.isYear ? MONTHS_FULL[LANG][+k.slice(5, 7) - 1] : prettyDate(k); return '<tr><td>' + lbl + '</td><td class="r in">' + money(g.inn) + '</td><td class="r out">' + money(g.out) + '</td><td class="r">' + money(g.inn - g.out) + '</td></tr>'; }).join('');
+  // utang
+  const U = D.ut;
+  const utCard = S.settings.utangOn ? '<div class="card"><div class="b">🤝 ' + L('Ulat ng Utang', 'Credit report') + '</div>' +
+    '<table class="tbl"><tr><td>' + L('May utang sa akin (natitira)', 'Others owe me (balance)') + '</td><td class="r">' + money(U.owedLeft) + '</td></tr>' +
+    '<tr><td>' + L('Babayaran sa akin sa ' + R.title, 'Due to me in ' + R.title) + '</td><td class="r">' + money(U.owedDue) + '</td></tr>' +
+    '<tr><td>⏰ ' + L('Lampas na ang bayad', 'Overdue') + ' (' + U.owedLate.length + ')</td><td class="r out">' + money(U.owedLate.reduce((a, u) => a + nextAmt(u), 0)) + '</td></tr>' +
+    '<tr><td>' + L('Utang ko (natitira)', 'I owe (balance)') + '</td><td class="r">' + money(U.oweLeft) + '</td></tr>' +
+    '<tr><td>' + L('Babayaran ko sa ' + R.title, 'I must pay in ' + R.title) + '</td><td class="r">' + money(U.oweDue) + '</td></tr>' +
+    '<tr><td>⏰ ' + L('Utang kong lampas na', 'My overdue debts') + ' (' + U.oweLate.length + ')</td><td class="r out">' + money(U.oweLate.reduce((a, u) => a + nextAmt(u), 0)) + '</td></tr></table>' +
+    (U.owedLate.length ? '<div class="small b" style="margin-top:8px">' + L('Singilin', 'To collect') + ': ' + U.owedLate.map(u => esc(u.name) + ' ' + money(nextAmt(u))).join(' · ') + '</div>' : '') + '</div>' : '';
+  return '<div class="printhead"><b style="font-size:20px">' + esc(S.settings.businessName) + '</b> — ' + L('Ulat', 'Report') + ': ' + R.title + '</div>' +
     '<h2 class="noprint">📊 ' + L('Ulat', 'Reports') + '</h2>' +
-    '<div class="seg noprint"><button class="' + (!isYear ? 'on n' : '') + '" data-act="repmode" data-arg="month">' + L('Buwanan', 'Monthly') + '</button><button class="' + (isYear ? 'on n' : '') + '" data-act="repmode" data-arg="year">' + L('Taunan', 'Yearly') + '</button></div>' +
-    '<div class="pernav noprint"><button data-act="repnav" data-arg="-1">‹</button><b>' + title + '</b><button data-act="repnav" data-arg="1">›</button></div>' +
-    '<div class="grid"><div class="stat s-in"><div class="lbl">💚 ' + L('Kita', 'Money In') + '</div><div class="amt">' + money(T.inn) + '</div></div>' +
-    '<div class="stat s-out"><div class="lbl">🧡 ' + L('Gastos', 'Expenses') + '</div><div class="amt">' + money(T.out) + '</div></div>' +
-    '<div class="stat s-profit big"><div class="lbl">🐃 ' + L('Tubo', 'Profit') + '</div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + T.n + ' ' + L('listahan', 'records') + '</div></div></div>' +
-    '<div class="card" style="margin-top:12px"><div class="b">' + (isYear ? L('Kada buwan', 'By month') : L('Kada araw', 'By day')) + '</div>' + bars + '</div>' +
-    '<div class="card"><div class="b">🧡 ' + L('Saan napunta ang gastos', 'Where the money went') + '</div>' + byCat('out') + '</div>' +
-    '<div class="card"><div class="b">💚 ' + L('Saan galing ang kita', 'Where the money came from') + '</div>' + byCat('in') + '</div>' +
+    '<div class="seg noprint"><button class="' + (!R.isYear ? 'on n' : '') + '" data-act="repmode" data-arg="month">' + L('Buwanan', 'Monthly') + '</button><button class="' + (R.isYear ? 'on n' : '') + '" data-act="repmode" data-arg="year">' + L('Taunan', 'Yearly') + '</button></div>' +
+    '<div class="pernav noprint"><button data-act="repnav" data-arg="-1">‹</button><b>' + R.title + '</b><button data-act="repnav" data-arg="1">›</button></div>' +
+    // 1 summary
+    '<div class="grid"><div class="stat s-in"><div class="lbl">💚 ' + L('Kita', 'Money In') + '</div><div><div class="amt">' + money(T.inn) + '</div>' + pctChange(T.inn, D.P.inn) + '</div></div>' +
+    '<div class="stat s-out"><div class="lbl">🧡 ' + L('Gastos', 'Expenses') + '</div><div><div class="amt">' + money(T.out) + '</div>' + pctChange(T.out, D.P.out) + '</div></div>' +
+    '<div class="stat s-profit big"><div class="lbl">🐃 ' + L('Tubo', 'Profit') + '</div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + T.n + ' ' + L('listahan', 'records') + ' · ' + L('vs ' + R.prevTitle + ': ', 'vs ' + R.prevTitle + ': ') + money(D.P.profit) + ' ' + pctChange(T.profit, D.P.profit) + '</div></div></div>' +
+    '<div class="cashbox"><div style="font-size:28px">💵</div><div><div class="lbl">' + L('Pera mo ngayon (tantiya)', 'Cash on hand now (estimate)') + '</div><div class="amt">' + money(cashOnHand()) + '</div></div></div>' +
+    // 2 trend
+    '<div class="card"><div class="b">📈 ' + (R.isYear ? L('Kada buwan', 'By month') : L('Kada araw', 'By day')) + '</div>' + bars + '</div>' +
+    // 3 P&L
+    '<div class="card"><div class="b">🧾 ' + L('Kita at Gastos (Profit & Loss)', 'Profit & Loss') + '</div>' + pl + '</div>' +
+    '<div class="card"><div class="b">🧡 ' + L('Saan napunta ang gastos', 'Where the money went') + '</div>' + expBars +
+    (D.noReceipt ? '<div class="infobar">📎 ' + L(D.noReceipt + ' gastos ang walang resibo', D.noReceipt + ' expense(s) have no receipt') + '</div>' : '') + '</div>' +
+    // 4 method
+    '<div class="card"><div class="b">💳 ' + L('Ayon sa paraan ng bayad', 'By payment method') + '</div><table class="tbl">' + mRows + '</table></div>' +
+    // 5 utang
+    utCard +
+    // 6 person
+    '<div class="card"><div class="b">👥 ' + L('Sino ang naglista', 'Recorded by') + '</div><table class="tbl">' + pRows + '</table></div>' +
+    // 7 table
+    '<div class="card"><details' + (keys.length <= 7 ? ' open' : '') + '><summary class="b">📅 ' + (R.isYear ? L('Buod kada buwan', 'Monthly summary') : L('Buod kada araw', 'Daily summary')) + ' (' + keys.length + ')</summary>' +
+    (keys.length ? '<table class="tbl" style="margin-top:8px"><tr class="hd"><td></td><td class="r">' + L('Kita', 'In') + '</td><td class="r">' + L('Gastos', 'Out') + '</td><td class="r">' + L('Tubo', 'Profit') + '</td></tr>' + dRows + '</table>' : '<div class="muted small b">' + L('Wala pa', 'None yet') + '</div>') + '</details></div>' +
     '<div class="row2 noprint"><button class="btn soft" data-act="exportCsv">📗 Excel</button><button class="btn soft" data-act="print">📄 PDF / Print</button></div>';
 }
 function viewSettings() {
-  const s = S.settings;
+  const s = S.settings, owner = isOwner();
   const cats = t => (s.categories || []).filter(c => c.t === t && !c.sys).map(c => '<span class="cat">' + c.i + ' ' + esc(catName(c)) + ' <b data-act="delCat" data-arg="' + c.k + '">×</b></span>').join('') +
     '<button class="cat" data-act="addCat" data-arg="' + t + '">＋ ' + L('Dagdag', 'Add') + '</button>';
   const subTxt = !S.sub ? '' : S.sub.state === 'active' ? L('Active hanggang ', 'Active until ') + S.sub.until : S.sub.state === 'trial' ? L('Free trial: ' + S.sub.daysLeft + ' araw pa', 'Free trial: ' + S.sub.daysLeft + ' days left') : L('Tapos na', 'Ended');
-  return '<h2>⚙️ Settings</h2>' +
+  const sm = STAFF_MODES[staffMode()];
+  const roleBtn = owner ? '<button class="lnk" data-act="lockOwner">🔒 ' + L('Gawing Staff', 'Switch to Staff') + '</button>'
+    : S.pinSet === false ? '<button class="lnk" data-act="createPin">🔑 ' + L('Gumawa ng PIN', 'Create PIN') + '</button>'
+      : '<button class="lnk" data-act="unlockOwner">🔑 ' + L('Ako ang Owner', "I'm the Owner") + '</button>';
+  let h = '<h2>⚙️ Settings</h2>' +
     '<div class="card"><div class="b">🙋 ' + L('Ikaw (sa phone na ito)', 'You (on this phone)') + '</div>' +
     '<div class="set"><div>' + L('Pangalan mo', 'Your name') + '<div class="muted">' + esc(myName() || '—') + '</div></div><button class="lnk" data-act="changeName">' + L('Palitan', 'Change') + '</button></div>' +
-    '<div class="set"><div>' + L('Wika', 'Language') + '</div><div class="seg" style="margin:0;padding:3px;box-shadow:none;background:var(--sky2)"><button style="padding:8px 12px" class="' + (LANG === 'tl' ? 'on n' : '') + '" data-act="lang" data-arg="tl">Tagalog</button><button style="padding:8px 12px" class="' + (LANG === 'en' ? 'on n' : '') + '" data-act="lang" data-arg="en">English</button></div></div></div>' +
-    '<div class="card"><div class="b">🏪 ' + L('Negosyo', 'Business') + '</div>' +
-    '<div class="set"><div>' + L('Pangalan ng negosyo', 'Business name') + '<div class="muted">' + esc(s.businessName) + '</div></div><button class="lnk" data-act="editBiz">' + L('Palitan', 'Change') + '</button></div>' +
-    '<div class="set"><div>Currency<div class="muted">' + CURRENCIES[cur()].f + ' ' + CURRENCIES[cur()][LANG] + ' (' + sym() + ')</div></div><button class="lnk" data-act="editCur">' + L('Palitan', 'Change') + '</button></div>' +
-    '<div class="set"><div>' + L('Panimulang pera', 'Starting cash') + '<div class="muted">' + money(num(s.startCash)) + '</div></div><button class="lnk" data-act="editStart">' + L('Palitan', 'Change') + '</button></div>' +
-    '<div class="set"><div>' + L('May pautang / utang?', 'Track credit (utang)?') + '</div><button class="switch ' + (s.utangOn ? 'on' : '') + '" data-act="toggleUtang" aria-label="utang"></button></div></div>' +
-    '<div class="card"><div class="b">💳 ' + L('Paraan ng bayad', 'Payment methods') + '</div><div class="catrow" style="margin-top:10px">' +
-    Object.keys(METHODS).map(k => '<button class="cat ' + ((s.methods || []).includes(k) ? 'sel' : '') + '" data-act="toggleMethod" data-arg="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('') + '</div></div>' +
-    '<div class="card"><div class="b">💚 ' + L('Uri ng kita', 'Money-in categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('in') + '</div>' +
-    '<div class="b" style="margin-top:16px">🧡 ' + L('Uri ng gastos', 'Expense categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('out') + '</div></div>' +
-    '<div class="card">' +
+    '<div class="set"><div>' + L('Papel mo', 'Your role') + '<div class="muted">' + (owner ? '👑 Owner' : '🙋 Staff') + '</div></div>' + roleBtn + '</div>' +
+    '<div class="set"><div>' + L('Wika', 'Language') + '</div><div class="seg" style="margin:0;padding:3px;box-shadow:none;background:var(--sky2)"><button style="padding:8px 12px" class="' + (LANG === 'tl' ? 'on n' : '') + '" data-act="lang" data-arg="tl">Tagalog</button><button style="padding:8px 12px" class="' + (LANG === 'en' ? 'on n' : '') + '" data-act="lang" data-arg="en">English</button></div></div></div>';
+  if (owner) {
+    h += '<div class="card"><div class="b">👑 ' + L('Para sa Owner', 'Owner controls') + '</div>' +
+      '<div class="set"><div>' + L('Pwede bang mag-edit ang staff?', 'Can staff edit?') + '<div class="muted">' + sm[0] + ' ' + (LANG === 'tl' ? sm[1] : sm[2]) + '</div></div><button class="lnk" data-act="editStaffMode">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>🔔 ' + L('Mga pagbabago ng staff', 'Staff changes') + '<div class="muted">' + L('Mga in-edit o binura ng staff', 'What staff edited or deleted') + '</div></div><button class="lnk" data-act="go" data-arg="alerts">' + L('Tingnan', 'Open') + '</button></div>' +
+      '<div class="set"><div>📧 ' + L('Email para sa abiso', 'Email alerts') + '<div class="muted">' + esc(s.ownerEmail || L('Wala (opsyonal)', 'None (optional)')) + '</div></div><button class="lnk" data-act="editEmail">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>🔑 Owner PIN</div><button class="lnk" data-act="changePin">' + L('Palitan', 'Change') + '</button></div></div>' +
+      '<div class="card"><div class="b">🏪 ' + L('Negosyo', 'Business') + '</div>' +
+      '<div class="set"><div>' + L('Pangalan ng negosyo', 'Business name') + '<div class="muted">' + esc(s.businessName) + '</div></div><button class="lnk" data-act="editBiz">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>Currency<div class="muted">' + CURRENCIES[cur()].f + ' ' + CURRENCIES[cur()][LANG] + ' (' + sym() + ')</div></div><button class="lnk" data-act="editCur">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>' + L('Panimulang pera', 'Starting cash') + '<div class="muted">' + money(num(s.startCash)) + '</div></div><button class="lnk" data-act="editStart">' + L('Palitan', 'Change') + '</button></div>' +
+      '<div class="set"><div>' + L('May pautang / utang?', 'Track credit (utang)?') + '</div><button class="switch ' + (s.utangOn ? 'on' : '') + '" data-act="toggleUtang" aria-label="utang"></button></div></div>' +
+      '<div class="card"><div class="b">💳 ' + L('Paraan ng bayad', 'Payment methods') + '</div><div class="catrow" style="margin-top:10px">' +
+      Object.keys(METHODS).map(k => '<button class="cat ' + ((s.methods || []).includes(k) ? 'sel' : '') + '" data-act="toggleMethod" data-arg="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('') + '</div></div>' +
+      '<div class="card"><div class="b">💚 ' + L('Uri ng kita', 'Money-in categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('in') + '</div>' +
+      '<div class="b" style="margin-top:16px">🧡 ' + L('Uri ng gastos', 'Expense categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('out') + '</div></div>';
+  } else {
+    h += '<div class="lockbar">🔒 ' + L('Ang settings ng negosyo ay para sa Owner lang.', 'Business settings are for the owner only.') + '<div class="small" style="font-weight:700;margin-top:4px">' + sm[0] + ' ' + (LANG === 'tl' ? sm[3] : sm[4]) + '</div></div>';
+  }
+  h += '<div class="card">' +
     '<div class="set"><div>📜 ' + L('Kasaysayan ng pagbabago', 'Activity log') + '<div class="muted">' + L('Sino ang nagdagdag/nag-edit', 'Who added or changed what') + '</div></div><button class="lnk" data-act="go" data-arg="log">' + L('Tingnan', 'Open') + '</button></div>' +
     '<div class="set"><div>🎓 ' + L('Ulitin ang tutorial', 'Replay tutorial') + '</div><button class="lnk" data-act="replayTour">' + L('Simulan', 'Start') + '</button></div>' +
     (isStandalone() ? '' : '<div class="set"><div>📲 ' + L('I-add sa Home Screen', 'Add to Home Screen') + '</div><button class="lnk" data-act="showInstall">' + L('Paano?', 'How?') + '</button></div>') +
     '<div class="set"><div>🔄 Sync<div class="muted">' + (S.lastOk ? L('Huling sync: ', 'Last sync: ') + timeAgo(new Date(S.lastOk).toISOString()) : '—') + '</div></div><button class="lnk" data-act="syncNow">' + L('I-sync ngayon', 'Sync now') + '</button></div>' +
     '<div class="set"><div>⭐ Subscription<div class="muted">' + subTxt + '</div></div></div></div>' +
     '<div class="muted small b" style="text-align:center;margin:16px 0">Kwentoink v' + VERSION + (DEMO ? ' · DEMO' : '') + ' 🐃</div>';
+  return h;
+}
+function viewAlerts() {
+  const rows = staffChanges(), seen = LS.get(K('seen'), '');
+  if (rows.length) { const mx = rows.reduce((a, r) => String(r.time) > a ? String(r.time) : a, ''); setTimeout(() => { LS.set(K('seen'), mx); updateBell(); }, 1200); }
+  let h = '<h2>🔔 ' + L('Mga pagbabago ng staff', 'Staff changes') + '</h2><button class="btn soft" data-act="go" data-arg="home" style="margin-bottom:12px">← Home</button>';
+  if (!rows.length) return h + '<div class="card empty"><div class="m">' + mascot('happy') + '</div>' + L('Walang in-edit o binura ang staff. 👍', 'No staff edits or deletions. 👍') + '</div>';
+  return h + '<div class="card" style="padding:6px 14px">' + rows.map(r => '<div class="log"><div class="av">' + (r.action === 'delete' ? '🗑️' : '✏️') + '</div><div><div class="t1">' + esc(r.by || '?') + ' ' + (r.action === 'delete' ? L('nagbura', 'deleted') : L('nag-edit', 'edited')) + (String(r.time) > seen ? ' <span class="tag">' + L('BAGO', 'NEW') + '</span>' : '') + '</div><div class="t2">' + esc(r.summary || '') + '</div><div class="t2">' + timeAgo(r.time) + '</div></div></div>').join('') + '</div>';
 }
 function viewLog() {
   const icon = { add: '➕', edit: '✏️', delete: '🗑️', pay: '💸', receipt: '📎', settings: '⚙️', setup: '🎉', upsert: '✏️' };
@@ -893,7 +1091,7 @@ function viewLog() {
   const pend = S.ops.map(o => ({ time: o.at, by: o.by, action: o.action || o.op, summary: o.summary, pending: true }));
   const rows = pend.reverse().concat(S.log);
   if (!rows.length) return h + '<div class="card empty"><div class="m">' + mascot('think') + '</div>' + ((!navigator.onLine && !DEMO) ? L('Kailangan ng internet para makita ang buong kasaysayan.', 'Need internet to load the full history.') : L('Wala pa.', 'Nothing yet.')) + '</div>';
-  return h + '<div class="card" style="padding:6px 14px">' + rows.slice(0, 300).map(r => '<div class="log"><div class="av">' + (icon[r.action] || '•') + '</div><div><div class="t1">' + esc(r.by || '?') + ' ' + (word[r.action] || esc(r.action)) + '</div><div class="t2">' + esc(r.summary || '') + '</div><div class="t2">' + timeAgo(r.time) + (r.pending ? ' · ⏳ ' + L('hindi pa naka-sync', 'not synced yet') : '') + '</div></div></div>').join('') + '</div>';
+  return h + '<div class="card" style="padding:6px 14px">' + rows.slice(0, 300).map(r => '<div class="log"><div class="av">' + (icon[r.action] || '•') + '</div><div><div class="t1">' + esc(r.by || '?') + (r.role ? '<span class="role ' + r.role + '">' + (r.role === 'owner' ? 'Owner' : 'Staff') + '</span>' : '') + ' ' + (word[r.action] || esc(r.action)) + '</div><div class="t2">' + esc(r.summary || '') + '</div><div class="t2">' + timeAgo(r.time) + (r.pending ? ' · ⏳ ' + L('hindi pa naka-sync', 'not synced yet') : '') + '</div></div></div>').join('') + '</div>';
 }
 async function loadLog() {
   if (!navigator.onLine && !DEMO) return;
@@ -931,10 +1129,68 @@ const ACTIONS = {
     if (!v) return; const cats = (S.settings.categories || []).slice(); cats.push({ k: 'c_' + uid(), t, i: '🏷️', name: v.trim() });
     saveSettings({ categories: cats }, L('Bagong uri', 'New category') + ': ' + v);
   }),
-  replayTour: () => { go('home'); setTimeout(() => runTour(isOwnerDevice() ? 'full' : 'short'), 300); },
+  replayTour: () => { go('home'); setTimeout(() => runTour(isOwner() || isOwnerDevice() ? 'full' : 'short'), 300); },
   showInstall: () => installGuide(true),
-  syncNow: () => { flush(true); loadLog(); toast(L('Nagsi-sync…', 'Syncing…'), 'happy'); }
+  syncNow: () => { flush(true); loadLog(); toast(L('Nagsi-sync…', 'Syncing…'), 'happy'); },
+  unlockOwner: () => unlockOwner(),
+  createPin: () => createPinFlow(false),
+  changePin: () => createPinFlow(false, true),
+  lockOwner: () => { if (!confirm(L('Gawing Staff ang phone na ito? Kailangan ulit ang PIN para maging Owner.', 'Switch this phone to Staff? You will need the PIN to become Owner again.'))) return; LS.del(K('pin')); render(); toast(L('Staff mode na ang phone na ito', 'This phone is now in Staff mode'), 'happy'); },
+  editStaffMode: () => pickSheet(L('Pwede bang mag-edit ang staff?', 'Can staff edit?'), Object.keys(STAFF_MODES).map(k => ({ v: k, label: '<span class="e">' + STAFF_MODES[k][0] + '</span><span>' + (LANG === 'tl' ? STAFF_MODES[k][1] : STAFF_MODES[k][2]) + '<small>' + (LANG === 'tl' ? STAFF_MODES[k][3] : STAFF_MODES[k][4]) + '</small></span>' })), staffMode()).then(v => { if (v) saveSettings({ staffEdit: v }, L('Patakaran sa staff', 'Staff rule') + ': ' + STAFF_MODES[v][2]); }),
+  editEmail: () => promptSheet(L('Email para sa abiso (opsyonal)', 'Email for alerts (optional)'), S.settings.ownerEmail || '', 'text').then(v => { if (v !== null) saveSettings({ ownerEmail: v.trim() }, L('Email para sa abiso', 'Alert email')); })
 };
+
+/* ---------- owner PIN screens ---------- */
+function askPin(title, sub) {
+  return new Promise(res => {
+    let done = false;
+    const el = openSheet('<div class="sheet-head"><h2>' + title + '</h2><button class="x" data-x>×</button></div>' +
+      '<div style="text-align:center"><div style="width:90px;margin:0 auto">' + mascot('think') + '</div><div class="small b muted" style="margin:6px 0 12px">' + sub + '</div></div>' +
+      '<div class="pinbox">' + [0, 1, 2, 3].map(i => '<input type="password" inputmode="numeric" maxlength="1" pattern="[0-9]*" autocomplete="off" data-i="' + i + '">').join('') + '</div>', () => { if (!done) res(null); });
+    const ins = Array.from(el.querySelectorAll('.pinbox input'));
+    el.querySelector('[data-x]').onclick = () => closeSheet();
+    setTimeout(() => ins[0].focus(), 300);
+    ins.forEach((inp, i) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        if (inp.value && i < 3) ins[i + 1].focus();
+        const pin = ins.map(x => x.value).join('');
+        if (pin.length === 4) { done = true; setTimeout(() => { closeSheet(); res(pin); }, 120); }
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Backspace' && !inp.value && i > 0) ins[i - 1].focus(); });
+    });
+  });
+}
+async function unlockOwner() {
+  if (!navigator.onLine && !DEMO) { toast(L('Kailangan ng internet para i-check ang PIN', 'Need internet to check the PIN'), 'think'); return; }
+  const pin = await askPin('🔑 Owner PIN', L('Ilagay ang 4-digit PIN ng Owner', "Enter the owner's 4-digit PIN"));
+  if (!pin) return;
+  const h = await pinHash(pin);
+  try {
+    const j = await api('verifyPin', { pinHash: h });
+    if (j.locked) { toast(L('Maraming maling subok. Subukan ulit after 15 minuto.', 'Too many wrong tries. Try again in 15 minutes.'), 'sad'); return; }
+    if (!j.valid) { toast(L('Mali ang PIN', 'Wrong PIN'), 'sad'); return; }
+    LS.set(K('pin'), h); LS.set(K('owner'), true);
+    render(); loadLog(); toast(L('Owner mode na! 👑', 'Owner mode on! 👑'), 'cheer');
+  } catch (e) { toast(L('Hindi ma-check ngayon. Subukan ulit.', "Couldn't check right now. Try again."), 'sad'); }
+}
+async function createPinFlow(firstTime, change) {
+  if (!navigator.onLine && !DEMO) { toast(L('Kailangan ng internet', 'Internet needed'), 'think'); return; }
+  const p1 = await askPin(change ? L('Bagong PIN', 'New PIN') : L('Gumawa ng Owner PIN', 'Create Owner PIN'), firstTime ? L('Bago na ang Kwentoink! Gumawa ng 4-digit PIN para ikaw lang ang makapag-edit, makapagbura, at makapagpalit ng settings.', 'New in Kwentoink: create a 4-digit PIN so only you can edit, delete, and change settings.') : L('4 na numero. Tandaan mo ito!', '4 digits. Remember it!'));
+  if (!p1) return;
+  const p2 = await askPin(L('Ulitin ang PIN', 'Repeat the PIN'), L('I-type ulit para sigurado', 'Type it again to confirm'));
+  if (!p2) return;
+  if (p1 !== p2) { toast(L('Hindi magkapareho. Subukan ulit.', "They didn't match. Try again."), 'sad'); return; }
+  const h = await pinHash(p1);
+  try {
+    const j = await api('setPin', { pinHash: h, oldPinHash: pinKey(), by: myName() });
+    LS.set(K('pin'), h); LS.set(K('owner'), true);
+    applyServer(j); await saveCache(); render();
+    toast(L('Naka-set na ang PIN! 👑', 'PIN saved! 👑'), 'cheer');
+  } catch (e) {
+    toast(String(e.message).includes('PIN_EXISTS') ? L('May PIN na. Gamitin ang "Ako ang Owner".', 'A PIN already exists. Use "I\'m the Owner".') : L('Hindi na-save. Subukan ulit.', "Couldn't save. Try again."), 'sad');
+  }
+}
 function saveSettings(data, summary) {
   queueOp({ op: 'settings', data, action: 'settings', summary }).then(render);
 }
@@ -1005,7 +1261,7 @@ function openEntry(existing, preset) {
   const paintType = () => {
     el.querySelectorAll('#sh-type button').forEach(b => b.classList.toggle('on', b.dataset.t === e.type));
     el.querySelector('#f-cats').innerHTML = cats().map(c => '<button class="cat ' + (c.k === e.cat ? 'sel' : '') + '" data-c="' + c.k + '">' + c.i + ' ' + esc(catName(c)) + '</button>').join('');
-    el.querySelectorAll('#f-cats .cat').forEach(b => b.onclick = () => { e.cat = b.dataset.c; paintType(); });
+    el.querySelectorAll('#f-cats .cat').forEach(b => b.onclick = () => { if (lockReason(existing) && !isNew) return; e.cat = b.dataset.c; paintType(); });
   };
   const paintMeth = () => {
     el.querySelector('#f-meth').innerHTML = (S.settings.methods || ['cash']).map(k => '<button class="cat ' + (k === e.method ? 'sel' : '') + '" data-m="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('');
@@ -1014,6 +1270,16 @@ function openEntry(existing, preset) {
   el.querySelectorAll('#sh-type button').forEach(b => b.onclick = () => { if (e.type === b.dataset.t) return; e.type = b.dataset.t; e.cat = (cats()[0] || {}).k; paintType(); });
   paintType(); paintMeth();
   el.querySelector('#sh-close').onclick = () => closeSheet();
+  const lock = isNew ? '' : lockReason(existing);
+  if (lock) {
+    el.querySelector('.sheet-head h2').textContent = L('Detalye', 'Details');
+    el.querySelector('.sheet-head').insertAdjacentHTML('afterend', '<div class="lockbar">' + lock + '</div>');
+    el.querySelectorAll('input, #sh-type button, #f-cats .cat, #f-meth .cat').forEach(x => x.disabled = true);
+    el.querySelector('#f-save').classList.add('hidden');
+    const d = el.querySelector('#f-del'); if (d) d.classList.add('hidden');
+  } else if (!isNew && !isOwner()) {
+    el.querySelector('#f-save').insertAdjacentHTML('beforebegin', '<div class="infobar">ℹ️ ' + L('Makikita ni Owner ang pagbabagong ito.', 'The owner will see this change.') + '</div>');
+  }
   // existing receipt preview
   const showThumb = async r => {
     const ph = el.querySelector('#f-ph');
@@ -1075,38 +1341,77 @@ async function viewReceipt(e) {
 /* ---------- utang ---------- */
 function openUtangForm(existing) {
   const k = existing ? existing.kind : S.utKind;
-  const u = existing ? Object.assign({}, existing) : { id: uid('u'), kind: k, name: '', amount: '', paid: 0, due: '', note: '', status: 'open', payments: [] };
+  const u = existing ? Object.assign({}, existing) : { id: uid('u'), kind: k, name: '', amount: '', paid: 0, due: '', note: '', status: 'open', payments: [], ptype: 'cash', count: 3, freq: 'month' };
+  const st = { ptype: u.ptype || 'cash', count: u.count || 3, freq: u.freq || 'month', first: (u.schedule && u.schedule[0] && u.schedule[0].due) || '' };
   const el = openSheet('<div class="sheet-head"><h2>' + (k === 'owed' ? L('May utang sa akin', 'Someone owes me') : L('Utang ko', 'I owe')) + '</h2><button class="x" data-x>×</button></div>' +
     '<div class="field"><label>' + (k === 'owed' ? L('Sino ang may utang?', 'Who owes you?') : L('Kanino ka may utang?', 'Who do you owe?')) + '</label><input class="inp" id="u-name" value="' + esc(u.name) + '" placeholder="' + L('hal. Aling Nena', 'e.g. Aling Nena') + '"></div>' +
-    '<div class="field"><label>' + L('Magkano?', 'How much?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="u-amt" inputmode="decimal" placeholder="0.00" value="' + (u.amount || '') + '"></div></div>' +
-    '<div class="field"><label>' + L('Kailan babayaran? (opsyonal)', 'Due date (optional)') + '</label><input class="inp" type="date" id="u-due" value="' + (u.due || '') + '"></div>' +
+    '<div class="field"><label>' + L('Magkano lahat?', 'Total amount?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="u-amt" inputmode="decimal" placeholder="0.00" value="' + (u.amount || '') + '"></div></div>' +
+    '<div class="field"><label>' + L('Paano babayaran?', 'How will it be paid?') + '</label><div class="seg" id="u-ptype" style="margin:0"><button data-p="cash">💵 ' + L('Isang bayaran (Cash)', 'One payment (Cash)') + '</button><button data-p="install">📆 ' + L('Hulugan', 'Installment') + '</button></div></div>' +
+    '<div id="u-cash"><div class="field"><label>' + L('Kailan babayaran? (opsyonal)', 'Due date (optional)') + '</label><input class="inp" type="date" id="u-due" value="' + (u.due || '') + '"></div></div>' +
+    '<div id="u-inst"><div class="row2"><div class="field"><label>' + L('Ilang hulog?', 'How many payments?') + '</label><input class="inp" id="u-count" inputmode="numeric" value="' + st.count + '"></div>' +
+    '<div class="field"><label>' + L('Unang hulog', 'First payment') + '</label><input class="inp" type="date" id="u-first" value="' + (st.first || addFreq(today(), st.freq, 1)) + '"></div></div>' +
+    '<div class="field"><label>' + L('Gaano kadalas?', 'How often?') + '</label><div class="catgrid" id="u-freq"></div></div>' +
+    '<div class="infobar" id="u-prev"></div></div>' +
     '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="u-note" value="' + esc(u.note || '') + '"></div>' +
     '<button class="btn main" id="u-save">' + L('I-save', 'Save') + '</button>');
-  el.querySelector('[data-x]').onclick = () => closeSheet();
-  setTimeout(() => el.querySelector('#u-name').focus(), 300);
-  el.querySelector('#u-save').onclick = async () => {
-    const name = el.querySelector('#u-name').value.trim(), a = num(el.querySelector('#u-amt').value);
+  const q = s => el.querySelector(s);
+  const preview = () => {
+    const a = num(q('#u-amt').value), c = Math.max(2, Math.min(60, parseInt(q('#u-count').value) || 0));
+    q('#u-prev').innerHTML = a > 0 && c ? '📆 ' + c + ' × ' + money(Math.floor(a / c * 100) / 100) + ' · ' + FREQ[st.freq][LANG === 'tl' ? 1 : 2] + ' · ' + L('simula ', 'starting ') + prettyDate(q('#u-first').value || today()) : L('Ilagay ang halaga at bilang ng hulog.', 'Enter the amount and number of payments.');
+  };
+  const paint = () => {
+    el.querySelectorAll('#u-ptype button').forEach(b => { const on = b.dataset.p === st.ptype; b.classList.toggle('on', on); b.classList.toggle('n', on); });
+    q('#u-cash').classList.toggle('hidden', st.ptype !== 'cash');
+    q('#u-inst').classList.toggle('hidden', st.ptype !== 'install');
+    q('#u-freq').innerHTML = Object.keys(FREQ).map(f => '<button class="cat ' + (f === st.freq ? 'sel' : '') + '" data-f="' + f + '">' + FREQ[f][LANG === 'tl' ? 1 : 2] + '</button>').join('');
+    el.querySelectorAll('#u-freq .cat').forEach(b => b.onclick = () => { st.freq = b.dataset.f; if (!st.firstTouched) q('#u-first').value = addFreq(today(), st.freq, 1); paint(); });
+    preview();
+  };
+  el.querySelectorAll('#u-ptype button').forEach(b => b.onclick = () => { st.ptype = b.dataset.p; paint(); });
+  ['#u-amt', '#u-count', '#u-first'].forEach(s => q(s).addEventListener('input', preview));
+  q('#u-first').addEventListener('change', () => { st.firstTouched = true; });
+  if (existing && isInstall(existing)) st.firstTouched = true;
+  paint();
+  q('[data-x]').onclick = () => closeSheet();
+  setTimeout(() => q('#u-name').focus(), 300);
+  q('#u-save').onclick = async () => {
+    const name = q('#u-name').value.trim(), a = num(q('#u-amt').value);
     if (!name || !(a > 0)) { toast(L('Ilagay ang pangalan at halaga', 'Enter a name and amount'), 'think'); return; }
-    const rec = Object.assign({}, u, { name, amount: a, due: el.querySelector('#u-due').value, note: el.querySelector('#u-note').value.trim(), updatedAt: nowIso() });
+    const rec = Object.assign({}, u, { name, amount: a, note: q('#u-note').value.trim(), updatedAt: nowIso(), ptype: st.ptype });
+    if (st.ptype === 'install') {
+      const c = parseInt(q('#u-count').value) || 0;
+      if (c < 2 || c > 60) { toast(L('Ang hulog ay dapat 2 hanggang 60', 'Payments must be 2 to 60'), 'think'); return; }
+      rec.count = c; rec.freq = st.freq; rec.schedule = makeSchedule(a, c, st.freq, q('#u-first').value || addFreq(today(), st.freq, 1)); rec.due = rec.schedule[0].due;
+    } else { rec.due = q('#u-due').value; rec.schedule = []; rec.count = 0; rec.freq = ''; }
     if (!existing) { rec.createdAt = nowIso(); rec.by = myName(); rec.device = deviceId; rec.deleted = false; }
     rec.status = (rec.paid || 0) >= rec.amount ? 'paid' : 'open';
     closeSheet();
-    await queueOp({ op: 'upsert', table: 'utang', action: existing ? 'edit' : 'add', rec, summary: '🤝 ' + name + ' ' + money(a) });
+    await queueOp({ op: 'upsert', table: 'utang', action: existing ? 'edit' : 'add', rec, summary: '🤝 ' + name + ' ' + money(a) + (st.ptype === 'install' ? ' · ' + rec.count + ' ' + L('hulog', 'payments') : '') });
     render(); toast(praise(), 'cheer');
   };
 }
 function openUtangDetail(u) {
   if (!u) return;
-  const left = u.amount - (u.paid || 0);
+  const left = u.amount - (u.paid || 0), t = today();
+  const lock = lockReason(u);
+  let sched = '';
+  if (isInstall(u)) {
+    const S2 = schedState(u);
+    sched = '<h3>📆 ' + L('Iskedyul ng hulog', 'Payment schedule') + ' (' + S2.doneN + '/' + u.schedule.length + ')</h3><div class="card" style="padding:6px 14px">' + S2.rows.map(r =>
+      '<div class="set"><div>' + L('Hulog ', 'Payment ') + r.n + '<div class="muted">' + prettyDate(r.due) + (r.paidAmt > 0 && !r.done ? ' · ' + L('bayad na ', 'paid ') + money(r.paidAmt) : '') + '</div></div><div style="text-align:right">' + money(r.amt) + '<div>' +
+      (r.done ? '<span class="tag ok">✓ ' + L('Bayad', 'Paid') + '</span>' : r.due < t ? '<span class="tag">' + L('Lampas na', 'Overdue') + '</span>' : '<span class="tag" style="background:var(--sky2);color:var(--navy2)">⏳ ' + L('Hindi pa', 'Pending') + '</span>') + '</div></div></div>').join('') + '</div>';
+  }
   const el = openSheet('<div class="sheet-head"><h2>' + esc(u.name) + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="small b muted" style="margin:-4px 2px 10px">' + (isInstall(u) ? '📆 ' + L('Hulugan', 'Installment') + ' · ' + FREQ[u.freq || 'month'][LANG === 'tl' ? 1 : 2] : '💵 ' + L('Isang bayaran', 'One payment') + (u.due ? ' · Due ' + prettyDate(u.due) : '')) + ' · ' + L('Kabuuan ', 'Total ') + money(u.amount) + '</div>' +
     '<div class="grid"><div class="stat s-owed" style="min-height:80px"><div class="lbl">' + L('Natitira', 'Balance') + '</div><div class="amt">' + money(left) + '</div></div><div class="stat s-in" style="min-height:80px"><div class="lbl">' + L('Nabayaran', 'Paid') + '</div><div class="amt">' + money(u.paid || 0) + '</div></div></div>' +
-    (u.status !== 'paid' ? '<div class="field" style="margin-top:14px"><label>' + L('Magkano ang binayad?', 'How much was paid?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="p-amt" inputmode="decimal" value="' + left + '"></div></div>' +
+    (u.status !== 'paid' ? '<div class="field" style="margin-top:14px"><label>' + L('Magkano ang binayad?', 'How much was paid?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="p-amt" inputmode="decimal" value="' + nextAmt(u) + '"></div></div>' +
       '<button class="btn main" id="p-save">💸 ' + (u.kind === 'owed' ? L('Nagbayad sila', 'They paid') : L('Nagbayad ako', 'I paid')) + '</button>' : '<div class="card b" style="margin-top:12px;background:var(--green)">✓ ' + L('Bayad na lahat!', 'Fully paid!') + '</div>') +
-    '<h3>' + L('Mga bayad', 'Payments') + '</h3><div class="card" style="padding:6px 14px">' + ((u.payments || []).length ? u.payments.map(p => '<div class="set"><div>' + prettyDate(p.d) + '<div class="muted">✍️ ' + esc(p.by || '') + '</div></div><div class="val in">' + money(p.amt) + '</div></div>').join('') : '<div class="muted b small" style="padding:10px 0">' + L('Wala pa', 'None yet') + '</div>') + '</div>' +
-    '<div class="row2" style="margin-top:12px"><button class="btn soft" id="u-edit">✏️ ' + L('I-edit', 'Edit') + '</button><button class="btn danger" id="u-del">🗑️ ' + L('Burahin', 'Delete') + '</button></div>');
+    sched +
+    '<h3>' + L('Mga bayad', 'Payments') + '</h3><div class="card" style="padding:6px 14px">' + ((u.payments || []).length ? u.payments.slice().reverse().map(p => '<div class="set"><div>' + prettyDate(p.d) + '<div class="muted">✍️ ' + esc(p.by || '') + '</div></div><div class="val in">' + money(p.amt) + '</div></div>').join('') : '<div class="muted b small" style="padding:10px 0">' + L('Wala pa', 'None yet') + '</div>') + '</div>' +
+    (lock ? '<div class="lockbar" style="margin-top:12px">' + lock + '</div>' : '<div class="row2" style="margin-top:12px"><button class="btn soft" id="u-edit">✏️ ' + L('I-edit', 'Edit') + '</button><button class="btn danger" id="u-del">🗑️ ' + L('Burahin', 'Delete') + '</button></div>'));
   el.querySelector('[data-x]').onclick = () => closeSheet();
-  el.querySelector('#u-edit').onclick = () => { closeSheet(true); openUtangForm(u); };
-  el.querySelector('#u-del').onclick = async () => {
+  const ue = el.querySelector('#u-edit'); if (ue) ue.onclick = () => { closeSheet(true); openUtangForm(u); };
+  const ud = el.querySelector('#u-del'); if (ud) ud.onclick = async () => {
     if (!confirm(L('Burahin ang utang na ito?', 'Delete this credit record?'))) return;
     closeSheet();
     await queueOp({ op: 'upsert', table: 'utang', action: 'delete', rec: Object.assign({}, u, { deleted: true, updatedAt: nowIso() }), summary: '🤝 ' + u.name + ' ' + money(u.amount) });
@@ -1116,33 +1421,45 @@ function openUtangDetail(u) {
   if (ps) ps.onclick = async () => {
     const a = Math.min(num(el.querySelector('#p-amt').value), left);
     if (!(a > 0)) return;
-    const paid = (u.paid || 0) + a;
-    const rec = Object.assign({}, u, { paid, status: paid >= u.amount ? 'paid' : 'open', payments: (u.payments || []).concat([{ d: today(), amt: a, by: myName() }]), updatedAt: nowIso() });
+    const paid = Math.round(((u.paid || 0) + a) * 100) / 100;
+    const rec = Object.assign({}, u, { paid, status: paid >= u.amount - 0.005 ? 'paid' : 'open', payments: (u.payments || []).concat([{ d: today(), amt: a, by: myName() }]), updatedAt: nowIso() });
     closeSheet();
     await queueOp({ op: 'upsert', table: 'utang', action: 'pay', rec, summary: '💸 ' + u.name + ' ' + money(a) });
-    // record the cash movement automatically
-    const isIn = u.kind === 'owed';
-    const cat = isIn ? 'utang_in' : 'utang_out';
+    const isIn = u.kind === 'owed', cat = isIn ? 'utang_in' : 'utang_out';
     const entry = { id: uid('e'), type: isIn ? 'in' : 'out', amount: a, cat, catLabel: catName(CAT_LIB[cat]), method: (S.settings.methods || ['cash'])[0], date: today(), note: u.name, createdAt: nowIso(), updatedAt: nowIso(), by: myName(), device: deviceId, deleted: false };
     await queueOp({ op: 'upsert', table: 'entries', action: 'add', rec: entry, summary: (isIn ? '+' : '−') + money(a) + ' · ' + entry.catLabel + ' · ' + u.name });
     render(); toast(rec.status === 'paid' ? L('Bayad na lahat! 🎉', 'Fully paid! 🎉') : praise(), 'cheer');
   };
 }
 
-/* ---------- export ---------- */
+/* ---------- export (all reports in one Excel file) ---------- */
 function exportCsv() {
-  const isYear = S.repMode === 'year';
-  const y = S.repMonth.slice(0, 4);
-  const from = isYear ? y + '-01-01' : S.repMonth + '-01', to = isYear ? y + '-12-31' : S.repMonth + '-31';
-  const rows = [[L('Petsa', 'Date'), L('Uri', 'Type'), L('Kategorya', 'Category'), L('Halaga', 'Amount') + ' (' + cur() + ')', L('Paraan', 'Method'), L('Tala', 'Note'), L('Inilista ni', 'Recorded by')]];
-  live(S.entries).filter(e => e.date >= from && e.date <= to).sort((a, b) => a.date.localeCompare(b.date))
-    .forEach(e => rows.push([e.date, e.type === 'in' ? L('Kita', 'Money In') : L('Gastos', 'Expense'), catName(catOf(e.cat)), (e.type === 'in' ? '' : '-') + (+e.amount).toFixed(2), (METHODS[e.method] || ['', e.method])[1], e.note || '', e.by || '']));
-  const T = totals(from, to);
-  rows.push([], ['', '', L('Kabuuang Kita', 'Total In'), T.inn.toFixed(2)], ['', '', L('Kabuuang Gastos', 'Total Out'), (-T.out).toFixed(2)], ['', '', L('Tubo', 'Profit'), T.profit.toFixed(2)]);
-  const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const D = reportData(), R = D.R, T = D.T;
+  const rows = [];
+  const add = (...r) => rows.push(r);
+  const f2 = v => (+v).toFixed(2);
+  add(S.settings.businessName + ' — ' + L('Ulat', 'Report') + ': ' + R.title + ' (' + cur() + ')'); add();
+  add(L('BUOD', 'SUMMARY')); add(L('Kabuuang Kita', 'Total Money In'), f2(T.inn)); add(L('Kabuuang Gastos', 'Total Expenses'), f2(T.out)); add(L('Tubo', 'Net Profit'), f2(T.profit));
+  add(L('Tubo noong ', 'Profit in ') + R.prevTitle, f2(D.P.profit)); add(L('Pera ngayon (tantiya)', 'Cash on hand (estimate)'), f2(cashOnHand())); add();
+  add(L('KITA AT GASTOS', 'PROFIT & LOSS'));
+  Object.keys(D.catIn).forEach(k => add(L('Kita', 'In') + ': ' + catName(catOf(k)), f2(D.catIn[k].inn)));
+  Object.keys(D.catOut).forEach(k => add(L('Gastos', 'Out') + ': ' + catName(catOf(k)), f2(-D.catOut[k].out)));
+  add(L('Tubo', 'Net Profit'), f2(T.profit)); add();
+  add(L('AYON SA PARAAN NG BAYAD', 'BY PAYMENT METHOD'), L('Kita', 'In'), L('Gastos', 'Out'));
+  Object.keys(D.byMethod).forEach(k => add((METHODS[k] || ['', k])[1], f2(D.byMethod[k].inn), f2(D.byMethod[k].out))); add();
+  add(L('SINO ANG NAGLISTA', 'RECORDED BY'), L('Bilang', 'Count'), L('Kita', 'In'), L('Gastos', 'Out'));
+  Object.keys(D.byPerson).forEach(k => add(k, D.byPerson[k].n, f2(D.byPerson[k].inn), f2(D.byPerson[k].out))); add();
+  if (S.settings.utangOn) {
+    add('UTANG', L('Uri', 'Kind'), L('Paraan', 'Type'), L('Kabuuan', 'Total'), L('Nabayaran', 'Paid'), L('Natitira', 'Balance'), L('Susunod na due', 'Next due'));
+    live(S.utang).filter(u => u.status !== 'paid').forEach(u => add(u.name, u.kind === 'owed' ? L('Utang sa akin', 'Owed to me') : L('Utang ko', 'I owe'), isInstall(u) ? L('Hulugan', 'Installment') + ' ' + schedState(u).doneN + '/' + u.schedule.length : 'Cash', f2(u.amount), f2(u.paid || 0), f2(u.amount - (u.paid || 0)), nextDue(u)));
+    add();
+  }
+  add(L('MGA LISTAHAN', 'TRANSACTIONS')); add(L('Petsa', 'Date'), L('Uri', 'Type'), L('Kategorya', 'Category'), L('Halaga', 'Amount'), L('Paraan', 'Method'), L('Tala', 'Note'), L('Inilista ni', 'Recorded by'), L('Resibo', 'Receipt'));
+  D.ents.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(e => add(e.date, e.type === 'in' ? L('Kita', 'Money In') : L('Gastos', 'Expense'), catName(catOf(e.cat)), (e.type === 'in' ? '' : '-') + f2(e.amount), (METHODS[e.method] || ['', e.method])[1], e.note || '', e.by || '', e.receiptId || e.receiptLocal ? '✓' : ''));
+  const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = 'Kwentoink-' + (S.settings.businessName || 'report').replace(/[^\w-]+/g, '_') + '-' + (isYear ? y : S.repMonth) + '.csv';
+  a.download = 'Kwentoink-' + (S.settings.businessName || 'report').replace(/[^\w-]+/g, '_') + '-' + (R.isYear ? R.y : S.repMonth) + '.csv';
   document.body.appendChild(a); a.click(); a.remove();
   toast(L('Na-download na! Buksan sa Excel', 'Downloaded! Open it in Excel'), 'cheer');
 }
@@ -1256,7 +1573,7 @@ function installGuide(manual) {
 /* ---------- setup wizard (like Petsa: one question at a time) ---------- */
 function setupWizard() {
   return new Promise(resolve => {
-    const A = { lang: LANG, businessName: '', ownerName: '', type: '', currency: 'PHP', methods: ['cash'], startCash: '', utangOn: true, bills: [] };
+    const A = { lang: LANG, businessName: '', ownerName: '', pin: '', staffEdit: 'today', type: '', currency: 'PHP', methods: ['cash'], startCash: '', utangOn: true, bills: [] };
     const el = screen('');
     let i = 0;
     const steps = [
@@ -1266,6 +1583,10 @@ function setupWizard() {
         body: () => '<input class="wz-input" id="wv" value="' + esc(A.businessName) + '" placeholder="' + L('Pangalan ng negosyo', 'Business name') + '">', get: v => (A.businessName = v.trim()) || null },
       { q: () => L('Ano ang pangalan mo, Bossing?', "What's your name, Boss?") + '<small>' + L('Para alam namin kung sino ang naglista.', 'So we know who recorded what.') + '</small>', m: 'happy',
         body: () => '<input class="wz-input" id="wv" value="' + esc(A.ownerName) + '" placeholder="' + L('Pangalan mo', 'Your name') + '">', get: v => (A.ownerName = v.trim()) || null },
+      { q: () => L('Gumawa ng 4-digit Owner PIN', 'Create a 4-digit Owner PIN') + '<small>' + L('Para ikaw lang ang makapag-edit, makapagbura, at makapagpalit ng settings. Tandaan mo ito!', 'So only you can edit, delete, and change settings. Remember it!') + '</small>', m: 'think',
+        body: () => '<input class="wz-input" id="wv" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off" value="' + esc(A.pin) + '" placeholder="• • • •" style="letter-spacing:14px">', get: v => { v = String(v).replace(/\D/g, ''); if (v.length !== 4) return null; A.pin = v; return 1; } },
+      { q: () => L('Pwede bang mag-edit ang staff ng sarili nilang listahan?', 'Can staff edit their own records?') + '<small>' + L('Pwede mong baguhin ito mamaya sa Settings.', 'You can change this later in Settings.') + '</small>', m: 'think',
+        body: () => opt('staffEdit', Object.keys(STAFF_MODES).map(k => [k, STAFF_MODES[k][0], LANG === 'tl' ? STAFF_MODES[k][1] : STAFF_MODES[k][2], LANG === 'tl' ? STAFF_MODES[k][3] : STAFF_MODES[k][4]])), auto: true },
       { q: () => L('Anong klase ang negosyo mo?', 'What kind of business is it?') + '<small>' + L('Aayusin namin ang mga kategorya para sa iyo.', "We'll set up categories that fit.") + '</small>', m: 'think',
         body: () => opt('type', BIZ_TYPES.map(b => [b.k, b.e, b[LANG], ''])), auto: true },
       { q: () => L('Anong pera ang gamit mo?', 'Which currency do you use?'), m: 'happy',
@@ -1317,10 +1638,13 @@ function setupWizard() {
       const cats = TYPE_CATS[A.type || 'other'].map(k => CAT_LIB[k]);
       A.bills.forEach(k => { if (!cats.find(c => c.k === k)) cats.splice(cats.length - 1, 0, CAT_LIB[k]); });
       cats.push(CAT_LIB.utang_in, CAT_LIB.utang_out);
-      const settings = { lang: A.lang, businessName: A.businessName, ownerName: A.ownerName, bizType: A.type, currency: A.currency, methods: A.methods, startCash: num(A.startCash), utangOn: A.utangOn, categories: cats };
+      let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { }
+      const settings = { lang: A.lang, businessName: A.businessName, ownerName: A.ownerName, bizType: A.type, currency: A.currency, methods: A.methods, startCash: num(A.startCash), utangOn: A.utangOn, categories: cats, staffEdit: A.staffEdit, tz };
       const btn = el.querySelector('#wn'); btn.disabled = true; btn.textContent = L('Sine-save…', 'Saving…');
       try {
-        const j = await api('setup', { settings, by: A.ownerName });
+        const h = await pinHash(A.pin);
+        LS.set(K('pin'), h);
+        const j = await api('setup', { settings, by: A.ownerName, pinHash: h });
         applyServer(j); await saveCache();
         LS.set(K('name'), A.ownerName); LS.set(K('owner'), true);
         el.remove(); resolve();
@@ -1368,7 +1692,8 @@ function tourSteps(kind) {
     { sel: '#nav-utang', tl: 'Sa <b>Utang</b> ililista kung sino ang may utang sa iyo, at utang mo.', en: '<b>Credit</b> tracks who owes you, and who you owe.', skipIf: () => !S.settings.utangOn },
     { sel: '#nav-report', tl: 'Sa <b>Ulat</b> makikita ang buwanang kita, at pwedeng i-download sa Excel o PDF.', en: '<b>Reports</b> shows your monthly results, with Excel or PDF download.' },
     { sel: '#syncBadge', tl: 'Kahit walang internet, naka-save sa phone. Kusa itong magsi-sync mamaya.', en: 'No internet? It saves on the phone and syncs by itself later.' },
-    { sel: '#btn-settings', tl: 'Sa Settings: palitan ang wika, currency, o <b>ulitin ang tutorial</b>.', en: 'Settings: change language, currency, or <b>replay this tutorial</b>.' }
+    { sel: '#btn-bell', tl: '🔔 Dito ka aabisuhan kapag may in-edit o binura ang staff.', en: '🔔 You get notified here when staff edit or delete something.', skipIf: () => !isOwner() },
+    { sel: '#btn-settings', tl: 'Sa Settings: palitan ang wika, currency, ang patakaran sa staff, o <b>ulitin ang tutorial</b>.', en: 'Settings: change language, currency, staff rules, or <b>replay this tutorial</b>.' }
   ];
   if (kind === 'full') return full;
   return full.filter(s => ['#fab', '#sh-type', '#sh-rcpt', '#sh-close', '#nav-list'].includes(s.sel)).map(s => s.sel === '#fab' ? Object.assign({}, s, { tl: 'Ganito maglista: pindutin ang <b>+</b>.', en: 'Here\'s how to record: tap <b>+</b>.' }) : s);
@@ -1485,7 +1810,7 @@ async function boot() {
   let fresh = false;
   if (navigator.onLine || DEMO) {
     try {
-      const j = S.ops.length ? await api('sync', { ops: S.ops }) : await api('init', {});
+      const j = S.ops.length ? await api('sync', { ops: S.ops, pin: pinKey() }) : await api('init', { pin: pinKey() });
       if (S.ops.length) { S.ops = []; DB.set(K('ops'), S.ops); }
       applyServer(j); await saveCache(); fresh = true;
     } catch (e) { console.warn(e); }
@@ -1506,8 +1831,10 @@ async function boot() {
   if (!S.settings) await setupWizard();
   if (!myName()) await askName(false);
   carryParams();
+  // businesses set up before the PIN feature: ask the owner's phone to create one
+  if (S.pinSet === false && isOwnerDevice() && (navigator.onLine || DEMO)) { showApp(); await createPinFlow(true); }
   showApp();
-  if (!LS.get(K('tour'), false)) { go('home'); await new Promise(r => setTimeout(r, 400)); await runTour(isOwnerDevice() ? 'full' : 'short'); }
+  if (!LS.get(K('tour'), false)) { go('home'); await new Promise(r => setTimeout(r, 400)); await runTour(isOwner() || isOwnerDevice() ? 'full' : 'short'); }
   flush(); loadLog();
 }
 let appShown = false;
@@ -1518,6 +1845,7 @@ function showApp() {
     $$('.nav button[data-v]').forEach(b => b.onclick = () => go(b.dataset.v));
     $('#fab').onclick = () => openEntry();
     $('#btn-settings').onclick = () => go('settings');
+    $('#btn-bell').onclick = () => go('alerts');
     $('#syncBadge').onclick = () => { flush(true); };
   }
   go(S.view || 'home');
