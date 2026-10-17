@@ -9,7 +9,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kwentoink">
-<link rel="manifest" href="manifest.json">
 <link rel="icon" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
 <style>
@@ -291,7 +290,15 @@ const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
 const VERSION = '1.0.0';
 const qs = new URLSearchParams(location.search);
-const CODE = (qs.get('id') || '').trim();
+// Remember the link code on this phone, so the installed app (Android) opens the right business
+const CODE = (() => {
+  let c = (qs.get('id') || '').trim();
+  try {
+    if (c) localStorage.setItem('kw_lastCode', JSON.stringify(c));
+    else { c = JSON.parse(localStorage.getItem('kw_lastCode') || '""') || ''; if (c) history.replaceState(null, '', location.pathname + '?id=' + c); }
+  } catch (e) { }
+  return c;
+})();
 const DEMO = CODE === 'demo' || API_URL.indexOf('PASTE_') === 0;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -301,6 +308,9 @@ const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel'
 const IS_ANDROID = /Android/i.test(UA);
 const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|Line\/|TikTok|MicroMessenger/i.test(UA);
 const IS_CRIOS = /CriOS|EdgiOS|FxiOS/.test(UA);
+// Android/Chrome needs the manifest to offer a real one-tap install.
+// iPhone skips it so the Home Screen app keeps the personal link (?id=...).
+if (!IS_IOS) { const ml = document.createElement('link'); ml.rel = 'manifest'; ml.href = 'manifest.json'; document.head.appendChild(ml); }
 const SAFARI_VER = (() => { const m = UA.match(/Version\/(\d+)/); return m ? +m[1] : 0; })();
 
 /* ---------- local device storage ---------- */
