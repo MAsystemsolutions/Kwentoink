@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="tl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Kwentoink</title>
+<meta name="theme-color" content="#cfe8fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kwentoink">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+/* ================= KWENTOINK STYLES ================= */
+:root{
+  --sky:#cfe8fb; --sky2:#e9f5fe; --cream:#fff8ee; --navy:#2c3e6b; --navy2:#4d6699;
+  --pink:#ef6f8a; --rose:#ffe1e7; --green:#dff5e3; --green2:#2f8f5b; --peach:#ffe9d6;
+  --yellow:#ffd66b; --muted:#7686a6; --line:#e3eefa; --white:#fff;
+  --r:22px; --shadow:0 3px 0 rgba(44,62,107,.07), 0 8px 24px rgba(44,62,107,.06);
+  --font: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --safeb: env(safe-area-inset-bottom, 0px); --safet: env(safe-area-inset-top, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overflow-x:hidden;margin:0;background:var(--sky);color:var(--navy);font-family:var(--font);font-size:16px;-webkit-text-size-adjust:100%}
+body{min-height:100vh;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;color:var(--navy)}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.b{font-weight:800}
+
+/* ---- layout ---- */
+#app{max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:calc(96px + var(--safeb))}
+.top{position:sticky;top:0;z-index:20;background:linear-gradient(var(--sky) 80%,rgba(207,232,251,0));padding:calc(10px + var(--safet)) 16px 8px;display:flex;align-items:center;gap:10px}
+.top img{width:40px;height:40px;border-radius:12px}
+.brand{font-weight:900;font-size:21px;letter-spacing:.5px;line-height:1}
+.brand span{color:var(--pink)}
+.bizname{font-size:12px;color:var(--muted);font-weight:700;max-width:46vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sp{flex:1}
+.top .tb{min-width:0;flex:1 1 auto;overflow:hidden}
+.top .tb .brand{white-space:nowrap}
+.top>*{flex-shrink:0}.top .tb{flex-shrink:1}
+.iconbtn{width:42px;height:42px;border-radius:14px;background:var(--white);display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
+.sync{font-size:11px;font-weight:800;padding:6px 10px;max-width:112px;overflow:hidden;text-overflow:ellipsis;border-radius:99px;background:var(--white);box-shadow:var(--shadow);white-space:nowrap}
+.sync.ok{color:var(--green2)} .sync.wait{color:#b7791f} .sync.off{color:var(--muted)}
+.demo-chip{font-size:10px;background:var(--yellow);padding:2px 7px;border-radius:99px;font-weight:900;margin-left:4px}
+
+.view{padding:4px 16px 16px;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-size:22px;margin:10px 2px 12px;font-weight:900}
+h3{font-size:16px;margin:18px 2px 10px;font-weight:900}
+.card{background:var(--white);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+
+/* ---- hello bubble ---- */
+.hello{display:flex;align-items:flex-end;gap:8px;margin:2px 0 12px}
+.hello .m{width:78px;flex:none}
+.bubble{background:var(--white);border-radius:20px 20px 20px 6px;padding:12px 14px;box-shadow:var(--shadow);font-weight:700;font-size:15px;line-height:1.35;position:relative}
+.bubble small{display:block;font-weight:600;color:var(--muted);font-size:12px;margin-top:2px}
+
+/* ---- period chips ---- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:9px 14px;border-radius:99px;background:var(--white);font-weight:800;font-size:14px;box-shadow:var(--shadow);border:2px solid transparent;white-space:nowrap}
+.chip.on{background:var(--navy);color:#fff}
+.chip.sel{border-color:var(--navy);background:var(--sky2)}
+
+/* ---- dashboard cards ---- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border-radius:var(--r);padding:14px;box-shadow:var(--shadow);min-height:108px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.stat .lbl{font-weight:900;font-size:14px;display:flex;align-items:center;gap:6px}
+.stat .amt{font-weight:900;font-size:22px;letter-spacing:-.3px;margin-top:8px;word-break:break-all}
+.stat .sub{font-size:12px;font-weight:700;color:var(--muted)}
+.stat .em{position:absolute;right:10px;top:8px;font-size:30px;opacity:.9}
+.s-in{background:var(--green)} .s-out{background:var(--peach)} .s-profit{background:var(--white)} .s-owed{background:var(--rose)} .s-owe{background:#efe9ff}
+.big{grid-column:1/-1}
+.cashbox{display:flex;align-items:center;gap:12px;background:var(--navy);color:#fff;border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);margin:12px 0}
+.cashbox .amt{font-size:24px;font-weight:900}
+.cashbox .lbl{font-size:13px;opacity:.8;font-weight:700}
+
+/* ---- list ---- */
+.item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:0}
+.item .ic{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:22px;flex:none}
+.item .ic.in{background:var(--green)} .item .ic.out{background:var(--peach)}
+.item .mid{flex:1;min-width:0}
+.item .t1{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t2{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .val{font-weight:900;white-space:nowrap}
+.val.in{color:var(--green2)} .val.out{color:var(--pink)}
+.dayhead{display:flex;justify-content:space-between;font-weight:900;font-size:13px;color:var(--muted);margin:16px 6px 6px}
+.empty{text-align:center;padding:26px 10px;color:var(--muted);font-weight:700}
+.empty .m{width:110px;margin:0 auto 8px}
+.search{width:100%;padding:13px 16px;border-radius:16px;border:2px solid var(--line);background:var(--white);margin-bottom:10px}
+
+/* ---- bottom nav ---- */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;pointer-events:none}
+.nav-in{pointer-events:auto;width:100%;max-width:520px;background:var(--white);border-radius:26px 26px 0 0;box-shadow:0 -6px 24px rgba(44,62,107,.10);display:flex;align-items:flex-end;justify-content:space-around;padding:8px 6px calc(8px + var(--safeb))}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:800;color:var(--muted);padding:4px 0}
+.nav button .e{font-size:22px;filter:grayscale(.6);opacity:.75}
+.nav button.on{color:var(--navy)} .nav button.on .e{filter:none;opacity:1}
+.fab{width:64px!important;height:64px;flex:none!important;border-radius:22px;background:var(--pink)!important;color:#fff!important;font-size:34px!important;font-weight:900;display:grid!important;place-items:center;margin-top:-30px;box-shadow:0 8px 18px rgba(239,111,138,.45)}
+
+/* ---- sheet ---- */
+.backdrop{position:fixed;inset:0;background:rgba(30,42,74,.45);z-index:60;opacity:0;transition:opacity .2s}
+.backdrop.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;margin:0 auto;max-width:520px;background:var(--cream);border-radius:28px 28px 0 0;max-height:92vh;overflow-y:auto;padding:10px 16px calc(20px + var(--safeb));transform:translateY(100%);transition:transform .25s ease;-webkit-overflow-scrolling:touch}
+.sheet.show{transform:none}
+.grab{width:44px;height:5px;border-radius:9px;background:#d9cdbb;margin:2px auto 8px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet-head h2{margin:0}
+.x{width:40px;height:40px;border-radius:14px;background:var(--white);font-size:20px;font-weight:900;box-shadow:var(--shadow)}
+.seg{display:flex;background:var(--white);border-radius:18px;padding:5px;gap:5px;box-shadow:var(--shadow);margin-bottom:12px}
+.seg button{flex:1;padding:12px 6px;border-radius:14px;font-weight:900;font-size:15px}
+.seg button.on.in{background:var(--green);color:var(--green2)}
+.seg button.on.out{background:var(--peach);color:#c0563a}
+.seg button.on.n{background:var(--navy);color:#fff}
+.amtwrap{background:var(--white);border-radius:20px;padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.amtwrap span{font-size:28px;font-weight:900;color:var(--muted)}
+.amtwrap input{border:0;outline:0;font-size:34px;font-weight:900;width:100%;background:transparent;min-width:0}
+.field{margin-bottom:12px}
+.field label{display:block;font-weight:800;font-size:13px;margin:0 4px 6px;color:var(--navy2)}
+.inp{width:100%;padding:13px 14px;border-radius:16px;border:2px solid var(--line);background:var(--white);outline:0}
+.inp:focus{border-color:#9cc5ee}
+.catgrid{display:flex;flex-wrap:wrap;gap:8px}
+.cat{padding:9px 12px;border-radius:14px;background:var(--white);font-weight:800;font-size:14px;border:2px solid transparent;box-shadow:var(--shadow)}
+.cat.sel{border-color:var(--navy);background:var(--sky2)}
+.rcpt{display:flex;align-items:center;gap:12px;background:var(--white);border-radius:18px;padding:12px;box-shadow:var(--shadow);border:2px dashed #c9dcf2}
+.rcpt img{width:64px;height:64px;object-fit:cover;border-radius:12px}
+.rcpt .ph{width:64px;height:64px;border-radius:12px;background:var(--sky2);display:grid;place-items:center;font-size:28px;flex:none}
+.btn{display:block;width:100%;padding:16px;border-radius:18px;font-weight:900;font-size:17px;text-align:center;box-shadow:var(--shadow)}
+.btn.main{background:var(--navy);color:#fff}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.soft{background:var(--white);color:var(--navy)}
+.btn.danger{background:var(--white);color:var(--pink)}
+.btn:active,.chip:active,.cat:active,.iconbtn:active{transform:scale(.97)}
+.row2{display:flex;gap:10px}.row2>*{flex:1}
+
+/* ---- full screens (wizard, install, gates) ---- */
+.screen{position:fixed;inset:0;z-index:80;background:var(--sky);overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:calc(18px + var(--safet)) 18px calc(18px + var(--safeb))}
+.screen .inner{width:100%;max-width:460px;display:flex;flex-direction:column;flex:1}
+.wz-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.dots{display:flex;gap:5px;flex:1;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:9px;background:#fff;opacity:.8}
+.dots i.on{background:var(--navy);width:22px}
+.wz-m{width:150px;margin:8px auto 0}
+.wz-q{background:var(--white);border-radius:24px;padding:16px 18px;box-shadow:var(--shadow);font-weight:900;font-size:20px;line-height:1.3;text-align:center;margin:10px 0 16px;position:relative}
+.wz-q:before{content:"";position:absolute;top:-10px;left:50%;margin-left:-10px;border:10px solid transparent;border-top:0;border-bottom-color:var(--white)}
+.wz-q small{display:block;font-size:14px;color:var(--muted);font-weight:700;margin-top:6px}
+.opts{display:grid;gap:10px}
+.opt{background:var(--white);border-radius:20px;padding:15px 16px;font-weight:900;font-size:17px;text-align:left;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);border:3px solid transparent}
+.opt .e{font-size:28px}
+.opt.sel{border-color:var(--navy);background:var(--sky2)}
+.opt small{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.wz-foot{margin-top:auto;padding-top:16px;display:flex;gap:10px}
+.wz-input{width:100%;padding:16px;border-radius:20px;border:3px solid var(--white);background:var(--white);font-size:20px;font-weight:800;text-align:center;outline:0;box-shadow:var(--shadow)}
+.wz-input:focus{border-color:#9cc5ee}
+
+/* ---- install guide ---- */
+.inst-step{display:flex;gap:12px;align-items:flex-start;background:var(--white);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:10px;font-weight:700;line-height:1.35}
+.inst-step .n{width:30px;height:30px;border-radius:10px;background:var(--pink);color:#fff;display:grid;place-items:center;font-weight:900;flex:none}
+.kbd{display:inline-flex;align-items:center;gap:4px;background:var(--sky2);border-radius:8px;padding:1px 7px;font-weight:900;white-space:nowrap}
+.pointer{position:fixed;z-index:90;font-size:54px;animation:bounce 1s infinite;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2))}
+.pointer.bc{bottom:calc(6px + var(--safeb));left:50%;margin-left:-27px}
+.pointer.br{bottom:calc(6px + var(--safeb));right:14px}
+.pointer.tr{top:calc(4px + var(--safet));right:10px;animation-name:bounceUp}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+@keyframes bounceUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+/* ---- coach / tour ---- */
+.blk{position:fixed;z-index:100;background:transparent}
+.ring{position:fixed;z-index:101;border-radius:18px;box-shadow:0 0 0 4px var(--yellow),0 0 0 9999px rgba(20,30,60,.62);pointer-events:none;transition:all .25s ease}
+.coach{position:fixed;z-index:102;left:16px;right:16px;margin:0 auto;max-width:420px;background:var(--white);border-radius:22px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;gap:10px;align-items:flex-start;transition:top .25s ease}
+.coach .m{width:58px;flex:none}
+.coach .txt{font-weight:800;line-height:1.35;font-size:15px}
+.coach .act{display:flex;gap:8px;margin-top:10px;align-items:center}
+.coach .act .go{background:var(--navy);color:#fff;border-radius:12px;padding:9px 16px;font-weight:900}
+.coach .act .skip{font-size:12px;color:var(--muted);font-weight:800;margin-left:auto}
+.coach .stepn{font-size:11px;color:var(--muted);font-weight:800}
+.tap-arrow{position:fixed;z-index:103;font-size:40px;pointer-events:none;animation:bounce 0.9s infinite}
+
+/* ---- toast ---- */
+.toast{position:fixed;left:50%;bottom:calc(104px + var(--safeb));transform:translateX(-50%) translateY(20px);z-index:120;background:var(--white);border-radius:20px;padding:8px 14px 8px 8px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(44,62,107,.25);font-weight:900;opacity:0;transition:all .25s;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.toast .m{width:46px}
+
+/* ---- reports ---- */
+.bars{display:flex;align-items:flex-end;gap:3px;height:130px;padding-top:6px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+.bar i{display:block;border-radius:5px 5px 2px 2px;min-height:2px}
+.bar i.in{background:#7fd19a}.bar i.out{background:#ffb39a}
+.barlbl{display:flex;gap:3px;font-size:9px;color:var(--muted);font-weight:800}
+.barlbl span{flex:1;text-align:center}
+.hbar{margin:10px 0}
+.hbar .h{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-bottom:4px}
+.hbar .track{height:12px;border-radius:9px;background:var(--sky2);overflow:hidden}
+.hbar .fill{height:100%;border-radius:9px}
+.legend{display:flex;gap:12px;font-size:12px;font-weight:800;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.pernav{display:flex;align-items:center;justify-content:space-between;background:var(--white);border-radius:18px;padding:6px;box-shadow:var(--shadow);margin-bottom:12px}
+.pernav button{width:44px;height:40px;border-radius:12px;background:var(--sky2);font-weight:900;font-size:18px}
+.pernav b{font-size:16px}
+
+/* ---- utang ---- */
+.ut{padding:12px 4px;border-bottom:1px dashed var(--line)}
+.ut:last-child{border:0}
+.ut .r1{display:flex;justify-content:space-between;gap:8px;font-weight:900}
+.ut .r2{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
+.prog{height:8px;border-radius:9px;background:var(--sky2);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--green2);border-radius:9px}
+.tag{font-size:11px;font-weight:900;padding:3px 8px;border-radius:99px;background:var(--rose);color:var(--pink)}
+.tag.ok{background:var(--green);color:var(--green2)}
+
+/* ---- settings ---- */
+.set{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 2px;border-bottom:1px dashed var(--line);font-weight:800}
+.set:last-child{border:0}
+.set .muted{font-weight:700;font-size:13px}
+.set button.lnk{color:var(--navy2);font-weight:900;background:var(--sky2);padding:8px 12px;border-radius:12px;font-size:14px}
+.switch{width:52px;height:30px;border-radius:99px;background:#d7e2f0;position:relative;flex:none;transition:background .2s}
+.switch:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.switch.on{background:var(--green2)}.switch.on:after{left:25px}
+.catrow{display:flex;flex-wrap:wrap;gap:8px}
+.catrow .cat{display:flex;align-items:center;gap:6px}
+.catrow .cat b{color:var(--pink);font-size:16px;line-height:1}
+.log{display:flex;gap:10px;padding:10px 2px;border-bottom:1px dashed var(--line)}
+.log .av{width:36px;height:36px;border-radius:12px;background:var(--sky2);display:grid;place-items:center;font-weight:900;flex:none}
+.log .t1{font-weight:800;font-size:14px}
+.log .t2{font-size:12px;color:var(--muted);font-weight:700}
+
+/* ---- mascot animations ---- */
+.mascot .arm-wave{transform-origin:86px 92px;animation:wave 1.6s ease-in-out infinite}
+@keyframes wave{0%,60%,100%{transform:rotate(0)}15%,45%{transform:rotate(-18deg)}30%{transform:rotate(10deg)}}
+.mascot.hop{animation:hop 1.8s ease-in-out infinite}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* ---- splash ---- */
+#splash{position:fixed;inset:0;z-index:200;background:var(--sky);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .3s}
+#splash img{width:132px;height:132px;border-radius:34px;box-shadow:var(--shadow);animation:hop 1.4s ease-in-out infinite}
+#splash .brand{font-size:30px}
+#splash .tag2{color:var(--muted);font-weight:800;font-size:14px}
+
+/* ---- print (reports → PDF) ---- */
+@media print{
+  body,html{background:#fff}
+  .top,.nav,.toast,.noprint,.hello{display:none!important}
+  #app{padding:0;max-width:none}
+  .card,.stat{box-shadow:none;border:1px solid #ddd}
+  .printhead{display:block!important}
+}
+.printhead{display:none;margin-bottom:10px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img src="logo.png" alt="">
+  <div class="brand">KWENTO<span>INK</span></div>
+  <div class="tag2">Tell your business story, simply.</div>
+</div>
+<div id="app" class="hidden">
+  <div class="top">
+    <img src="logo.png" alt="Kwentoink">
+    <div class="tb">
+      <div class="brand">KWENTO<span>INK</span><span id="demoChip" class="demo-chip hidden">DEMO</span></div>
+      <div class="bizname" id="bizName"></div>
+    </div>
+    <div class="sync ok" id="syncBadge">✓</div>
+    <button class="iconbtn" id="btn-settings" aria-label="Settings">⚙️</button>
+  </div>
+  <div id="view"></div>
+</div>
+<nav class="nav hidden" id="nav"><div class="nav-in">
+  <button data-v="home" id="nav-home"><span class="e">🏠</span><span data-l="home"></span></button>
+  <button data-v="list" id="nav-list"><span class="e">📒</span><span data-l="list"></span></button>
+  <button class="fab" id="fab" aria-label="Add">+</button>
+  <button data-v="utang" id="nav-utang"><span class="e">🤝</span><span data-l="utang"></span></button>
+  <button data-v="report" id="nav-report"><span class="e">📊</span><span data-l="report"></span></button>
+</div></nav>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =================================================================
+   KWENTOINK — the app
+   ================================================================= */
+
+// ====== 1. PASTE YOUR APPS SCRIPT WEB APP URL HERE ======
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+// =========================================================
+
+const VERSION = '1.0.0';
+const qs = new URLSearchParams(location.search);
+const CODE = (qs.get('id') || '').trim();
+const DEMO = CODE === 'demo' || API_URL.indexOf('PASTE_') === 0;
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const UA = navigator.userAgent;
+const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/i.test(UA);
+const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|Line\/|TikTok|MicroMessenger/i.test(UA);
+const IS_CRIOS = /CriOS|EdgiOS|FxiOS/.test(UA);
+const SAFARI_VER = (() => { const m = UA.match(/Version\/(\d+)/); return m ? +m[1] : 0; })();
+
+/* ---------- local device storage ---------- */
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('kw_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('kw_' + k, JSON.stringify(v)); } catch (e) { } },
+  del(k) { try { localStorage.removeItem('kw_' + k); } catch (e) { } }
+};
+// IndexedDB key/value (for records + receipt photos — bigger than localStorage)
+const DB = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('kwentoink', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('kv', mode); const st = t.objectStore('kv');
+      const out = fn(st);
+      t.oncomplete = () => res(out instanceof IDBRequest ? out.result : undefined);
+      t.onerror = () => rej(t.error);
+    });
+  };
+  return {
+    get: k => tx('readonly', st => st.get(k)).catch(() => undefined),
+    set: (k, v) => tx('readwrite', st => { st.put(v, k); }).catch(() => { }),
+    del: k => tx('readwrite', st => { st.delete(k); }).catch(() => { })
+  };
+})();
+
+/* ---------- state ---------- */
+const S = {
+  settings: null, entries: [], utang: [], sub: null, support: '', grace: 7,
+  ops: [], rq: [], lastOk: 0, view: 'home', period: 'today', online: navigator.onLine,
+  syncing: false, log: [], repMonth: null, repMode: 'month', utKind: 'owed', listFilter: 'all', listQ: ''
+};
+const K = n => n + '_' + CODE;
+let deviceId = LS.get('device');
+if (!deviceId) { deviceId = 'd' + Math.random().toString(36).slice(2, 9); LS.set('device', deviceId); }
+
+/* ---------- language ---------- */
+let LANG = LS.get(K('lang'), null) || 'tl';
+const L = (tl, en) => LANG === 'tl' ? tl : en;
+const NAVL = { home: ['Home', 'Home'], list: ['Listahan', 'Records'], utang: ['Utang', 'Credit'], report: ['Ulat', 'Reports'] };
+
+/* ---------- presets ---------- */
+const BIZ_TYPES = [
+  { k: 'sari', e: '🏪', tl: 'Sari-sari store / Tindahan', en: 'Sari-sari / Retail store' },
+  { k: 'online', e: '📦', tl: 'Online seller', en: 'Online seller' },
+  { k: 'food', e: '🍰', tl: 'Pagkain / Bakery', en: 'Food / Bakery' },
+  { k: 'service', e: '🛠️', tl: 'Serbisyo / Freelance', en: 'Services / Freelance' },
+  { k: 'other', e: '✨', tl: 'Iba pa', en: 'Other' }
+];
+const C = (k, t, i, tl, en, extra) => Object.assign({ k, t, i, tl, en }, extra || {});
+const CAT_LIB = {
+  sales: C('sales', 'in', '🛒', 'Benta', 'Sales'),
+  fee: C('fee', 'in', '🧾', 'Bayad ng kliyente', 'Client payment'),
+  catering: C('catering', 'in', '🍱', 'Orders / Catering', 'Orders / Catering'),
+  loadin: C('loadin', 'in', '📱', 'Load / E-wallet', 'Load / E-wallet'),
+  other_in: C('other_in', 'in', '💰', 'Iba pang kita', 'Other income'),
+  stock: C('stock', 'out', '📦', 'Paninda / Stock', 'Stock / Supplies'),
+  ingredients: C('ingredients', 'out', '🥚', 'Sangkap', 'Ingredients'),
+  lpg: C('lpg', 'out', '🔥', 'Gas / LPG', 'Gas / LPG'),
+  packaging: C('packaging', 'out', '🎁', 'Packaging', 'Packaging'),
+  shipping: C('shipping', 'out', '🚚', 'Shipping', 'Shipping'),
+  ads: C('ads', 'out', '📣', 'Ads / Promo', 'Ads / Promo'),
+  tools: C('tools', 'out', '💻', 'Tools / Software', 'Tools / Software'),
+  transpo: C('transpo', 'out', '🛺', 'Pamasahe', 'Transport'),
+  meals: C('meals', 'out', '🍚', 'Pagkain', 'Meals'),
+  rent: C('rent', 'out', '🏠', 'Upa', 'Rent'),
+  elec: C('elec', 'out', '💡', 'Kuryente', 'Electricity'),
+  water: C('water', 'out', '🚰', 'Tubig', 'Water'),
+  net: C('net', 'out', '📶', 'Internet', 'Internet'),
+  salary: C('salary', 'out', '👥', 'Sahod', 'Salaries'),
+  supplier: C('supplier', 'out', '🏭', 'Supplier', 'Supplier'),
+  tax: C('tax', 'out', '🏛️', 'Buwis', 'Taxes'),
+  permit: C('permit', 'out', '📄', 'Permit', 'Permit'),
+  other_out: C('other_out', 'out', '🧾', 'Iba pa', 'Other'),
+  utang_in: C('utang_in', 'in', '🤝', 'Bayad sa utang', 'Credit collected', { sys: 1 }),
+  utang_out: C('utang_out', 'out', '🤝', 'Bayad ng utang ko', 'Debt paid', { sys: 1 })
+};
+const TYPE_CATS = {
+  sari: ['sales', 'loadin', 'other_in', 'stock', 'transpo', 'meals', 'other_out'],
+  online: ['sales', 'other_in', 'stock', 'shipping', 'packaging', 'ads', 'transpo', 'other_out'],
+  food: ['sales', 'catering', 'other_in', 'ingredients', 'lpg', 'packaging', 'transpo', 'other_out'],
+  service: ['fee', 'other_in', 'tools', 'ads', 'transpo', 'meals', 'other_out'],
+  other: ['sales', 'other_in', 'stock', 'transpo', 'meals', 'other_out']
+};
+const BILLS = ['rent', 'elec', 'water', 'net', 'salary', 'supplier', 'tax', 'permit'];
+const METHODS = {
+  cash: ['💵', 'Cash'], gcash: ['🔵', 'GCash'], maya: ['🟢', 'Maya'], bank: ['🏦', 'Bank'],
+  card: ['💳', 'Card'], paypal: ['🅿️', 'PayPal']
+};
+const CURRENCIES = {
+  PHP: { f: '🇵🇭', loc: 'en-PH', sym: '₱', tl: 'Peso', en: 'Peso' },
+  USD: { f: '🇺🇸', loc: 'en-US', sym: '$', tl: 'Dollar', en: 'Dollar' },
+  EUR: { f: '🇪🇺', loc: 'en-IE', sym: '€', tl: 'Euro', en: 'Euro' }
+};
+
+/* ---------- helpers ---------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = p => (p || '') + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const nowIso = () => new Date().toISOString();
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => ymd(new Date());
+const parseYmd = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const cur = () => (S.settings && S.settings.currency) || 'PHP';
+const sym = () => CURRENCIES[cur()].sym;
+let _nf = {};
+function money(n) {
+  const c = cur();
+  if (!_nf[c]) { try { _nf[c] = new Intl.NumberFormat(CURRENCIES[c].loc, { style: 'currency', currency: c, minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch (e) { _nf[c] = { format: v => CURRENCIES[c].sym + Number(v).toFixed(2) }; } }
+  return _nf[c].format(Number(n) || 0);
+}
+const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? Math.round(n * 100) / 100 : 0; };
+const MONTHS = { tl: ['Ene', 'Peb', 'Mar', 'Abr', 'May', 'Hun', 'Hul', 'Ago', 'Set', 'Okt', 'Nob', 'Dis'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
+const MONTHS_FULL = { tl: ['Enero', 'Pebrero', 'Marso', 'Abril', 'Mayo', 'Hunyo', 'Hulyo', 'Agosto', 'Setyembre', 'Oktubre', 'Nobyembre', 'Disyembre'], en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] };
+function prettyDate(s) {
+  if (s === today()) return L('Ngayon', 'Today');
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (s === ymd(y)) return L('Kahapon', 'Yesterday');
+  const d = parseYmd(s); return MONTHS[LANG][d.getMonth()] + ' ' + d.getDate() + (d.getFullYear() !== new Date().getFullYear() ? ', ' + d.getFullYear() : '');
+}
+function timeAgo(iso) {
+  const t = new Date(iso).getTime(); if (!t) return '';
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return L('ngayon lang', 'just now');
+  if (m < 60) return m + L(' min ang nakaraan', ' min ago');
+  const h = Math.round(m / 60); if (h < 24) return h + L(' oras ang nakaraan', ' hr ago');
+  const d = new Date(t); return prettyDate(ymd(d)) + ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+function catOf(k) {
+  const list = (S.settings && S.settings.categories) || [];
+  return list.find(c => c.k === k) || CAT_LIB[k] || { k, i: '🏷️', tl: k, en: k };
+}
+const catName = c => c.name || c[LANG] || c.en || c.k;
+const myName = () => LS.get(K('name'), '') || '';
+const isOwnerDevice = () => !!LS.get(K('owner'), false);
+
+/* =================================================================
+   MASCOT (drawn in code — loads instantly, works offline)
+   ================================================================= */
+function mascot(mood, cls) {
+  mood = mood || 'happy';
+  const wave = mood === 'wave', cheer = mood === 'cheer', sad = mood === 'sad', think = mood === 'think';
+  const eyes = sad
+    ? '<path d="M45 61 q5 4 10 0 M65 61 q5 4 10 0" stroke="#2c3e6b" stroke-width="3" fill="none" stroke-linecap="round"/>'
+    : think ? '<circle cx="50" cy="60" r="3.2" fill="#2c3e6b"/><circle cx="70" cy="60" r="3.2" fill="#2c3e6b"/>'
+      : '<path d="M45 62 q5 -7 10 0 M65 62 q5 -7 10 0" stroke="#2c3e6b" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  const mouth = sad ? '<path d="M53 87 q7 -5 14 0" stroke="#2c3e6b" stroke-width="2.6" fill="none" stroke-linecap="round"/>'
+    : '<path d="M51 84 q9 8 18 0" stroke="#2c3e6b" stroke-width="2.6" fill="#ef6f8a" stroke-linecap="round"/>';
+  const armL = cheer ? '<g><path d="M38 100 L22 82" stroke="#86a6d6" stroke-width="10" stroke-linecap="round"/><circle cx="21" cy="80" r="6.5" fill="#86a6d6" stroke="#4d6699" stroke-width="2"/></g>'
+    : '<g><path d="M38 102 L30 116" stroke="#86a6d6" stroke-width="10" stroke-linecap="round"/><circle cx="29" cy="118" r="6" fill="#86a6d6" stroke="#4d6699" stroke-width="2"/></g>';
+  const armR = (wave || cheer)
+    ? '<g class="' + (wave ? 'arm-wave' : '') + '"><path d="M84 100 L99 80" stroke="#86a6d6" stroke-width="10" stroke-linecap="round"/><circle cx="100" cy="78" r="6.5" fill="#86a6d6" stroke="#4d6699" stroke-width="2"/></g>'
+    : think ? '<g><path d="M84 104 L70 96" stroke="#86a6d6" stroke-width="10" stroke-linecap="round"/><circle cx="68" cy="95" r="6" fill="#86a6d6" stroke="#4d6699" stroke-width="2"/></g>'
+      : '<g><path d="M82 102 L90 116" stroke="#86a6d6" stroke-width="10" stroke-linecap="round"/><circle cx="91" cy="118" r="6" fill="#86a6d6" stroke="#4d6699" stroke-width="2"/></g>';
+  const spark = cheer ? '<path d="M14 40 l3 -7 3 7 7 3 -7 3 -3 7 -3 -7 -7 -3z M104 30 l2 -5 2 5 5 2 -5 2 -2 5 -2 -5 -5 -2z" fill="#ffd66b"/>' : '';
+  const q = think ? '<text x="98" y="40" font-size="22" font-weight="900" fill="#ef6f8a" font-family="system-ui">?</text>' : '';
+  return '<svg class="mascot ' + (cls || '') + '" viewBox="0 0 120 136" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+    spark + q +
+    // body + vest
+    '<rect x="38" y="94" width="44" height="34" rx="14" fill="#86a6d6" stroke="#4d6699" stroke-width="2.5"/>' +
+    '<path d="M40 100 q-2 22 8 26 h10 v-30z M80 100 q2 22 -8 26 h-10 v-30z" fill="#e8c27b" stroke="#b98a3e" stroke-width="2"/>' +
+    '<circle cx="66" cy="108" r="1.8" fill="#b98a3e"/><circle cx="66" cy="116" r="1.8" fill="#b98a3e"/>' +
+    armL + armR +
+    // horns
+    '<path d="M35 54 C14 54 6 40 12 26 C17 40 27 46 42 47 Z" fill="#a7b2c6" stroke="#5e6b85" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M85 54 C106 54 114 40 108 26 C103 40 93 46 78 47 Z" fill="#a7b2c6" stroke="#5e6b85" stroke-width="2.5" stroke-linejoin="round"/>' +
+    // ears
+    '<ellipse cx="29" cy="62" rx="10" ry="6" transform="rotate(-20 29 62)" fill="#86a6d6" stroke="#4d6699" stroke-width="2.5"/>' +
+    '<ellipse cx="29" cy="62" rx="5" ry="2.6" transform="rotate(-20 29 62)" fill="#f4a3b4"/>' +
+    '<ellipse cx="91" cy="62" rx="10" ry="6" transform="rotate(20 91 62)" fill="#86a6d6" stroke="#4d6699" stroke-width="2.5"/>' +
+    '<ellipse cx="91" cy="62" rx="5" ry="2.6" transform="rotate(20 91 62)" fill="#f4a3b4"/>' +
+    // head
+    '<ellipse cx="60" cy="66" rx="30" ry="28" fill="#86a6d6" stroke="#4d6699" stroke-width="2.5"/>' +
+    eyes +
+    '<ellipse cx="40" cy="72" rx="5" ry="3" fill="#f4a3b4" opacity=".75"/><ellipse cx="80" cy="72" rx="5" ry="3" fill="#f4a3b4" opacity=".75"/>' +
+    // snout
+    '<ellipse cx="60" cy="81" rx="18" ry="12" fill="#b4c8e8" stroke="#4d6699" stroke-width="2.5"/>' +
+    '<ellipse cx="53" cy="78" rx="2.6" ry="2" fill="#4d6699"/><ellipse cx="67" cy="78" rx="2.6" ry="2" fill="#4d6699"/>' +
+    mouth +
+    // salakot hat
+    '<path d="M24 44 L60 12 L96 44 Z" fill="#edcb85" stroke="#b98a3e" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M42 28 L60 12 L78 28" fill="none" stroke="#b98a3e" stroke-width="1.6" opacity=".7"/>' +
+    '<path d="M33 36 L87 36" stroke="#b98a3e" stroke-width="1.6" opacity=".6"/>' +
+    '<ellipse cx="60" cy="44" rx="40" ry="6.5" fill="#e3b96b" stroke="#b98a3e" stroke-width="2.5"/>' +
+    '<circle cx="60" cy="12" r="3" fill="#ef6f8a"/>' +
+    '</svg>';
+}
+
+/* =================================================================
+   API (real Apps Script, or demo mode saved on this phone)
+   ================================================================= */
+async function api(action, payload, timeoutMs) {
+  const body = Object.assign({ action, code: CODE, device: deviceId }, payload || {});
+  if (DEMO) return mockApi(body);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs || 25000);
+  try {
+    const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body), signal: ctrl.signal, redirect: 'follow' });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'Server error');
+    return j;
+  } finally { clearTimeout(t); }
+}
+
+// ---- DEMO backend: lets you try/show Kwentoink before deploying ----
+function mockApi(b) {
+  const key = 'mock_' + CODE;
+  const db = LS.get(key, { settings: null, entries: [], utang: [], log: [], receipts: {} });
+  const save = () => LS.set(key, db);
+  const trialEnds = new Date(); trialEnds.setDate(trialEnds.getDate() + 14);
+  const payload = () => ({ ok: true, sub: { state: 'trial', daysLeft: 14, until: ymd(trialEnds) }, support: 'Demo mode', grace: 7, settings: db.settings, entries: db.entries, utang: db.utang });
+  return new Promise(res => setTimeout(() => {
+    if (b.action === 'init') return res(payload());
+    if (b.action === 'setup') { db.settings = Object.assign({}, b.settings, { setupDone: true }); db.log.unshift({ time: nowIso(), by: b.by, action: 'setup', summary: b.settings.businessName }); save(); return res(payload()); }
+    if (b.action === 'sync') {
+      (b.ops || []).forEach(op => {
+        if (op.op === 'settings') db.settings = Object.assign({}, db.settings, op.data);
+        else {
+          const arr = db[op.table]; const i = arr.findIndex(x => x.id === op.rec.id);
+          if (i >= 0) { if (!(op.rec.updatedAt < arr[i].updatedAt)) arr[i] = op.rec; } else arr.push(op.rec);
+        }
+        db.log.unshift({ time: op.at, by: op.by, action: op.action || op.op, table: op.table, summary: op.summary });
+      });
+      db.log = db.log.slice(0, 300); save(); return res(payload());
+    }
+    if (b.action === 'receipt') { const id = 'demo_' + uid(); try { db.receipts[id] = { mime: b.mime, data: b.data.length < 900000 ? b.data : '' }; save(); } catch (e) { } return res({ ok: true, fileId: id }); }
+    if (b.action === 'getReceipt') { const r = db.receipts[b.fileId] || {}; return res({ ok: true, mime: r.mime, data: r.data || '' }); }
+    if (b.action === 'log') return res({ ok: true, log: db.log });
+    res({ ok: false, error: 'unknown' });
+  }, 150));
+}
+
+/* =================================================================
+   SYNC ENGINE — everything saves on the phone first, then syncs
+   ================================================================= */
+async function loadCache() {
+  const d = await DB.get(K('data'));
+  if (d) Object.assign(S, { settings: d.settings, entries: d.entries || [], utang: d.utang || [], sub: d.sub, support: d.support || '', grace: d.grace || 7, lastOk: d.lastOk || 0 });
+  S.ops = (await DB.get(K('ops'))) || [];
+  S.rq = (await DB.get(K('rq'))) || [];
+  S.log = (await DB.get(K('log'))) || [];
+  ensureLocalPending();
+  return !!d;
+}
+function saveCache() {
+  return DB.set(K('data'), { settings: S.settings, entries: S.entries, utang: S.utang, sub: S.sub, support: S.support, grace: S.grace, lastOk: S.lastOk });
+}
+function applyServer(j) {
+  S.settings = j.settings || S.settings;
+  if (j.settings === null) S.settings = null;
+  S.entries = j.entries || [];
+  S.utang = j.utang || [];
+  S.sub = j.sub; S.support = j.support || S.support; S.grace = j.grace || 7;
+  S.lastOk = Date.now();
+  ensureLocalPending();
+}
+// re-apply changes that haven't reached the server yet
+function ensureLocalPending() { S.ops.forEach(applyLocal); }
+function applyLocal(op) {
+  if (op.op === 'settings') { S.settings = Object.assign({}, S.settings, op.data); return; }
+  const arr = op.table === 'utang' ? S.utang : S.entries;
+  const i = arr.findIndex(x => x.id === op.rec.id);
+  if (i >= 0) { if (!(op.rec.updatedAt < arr[i].updatedAt)) arr[i] = Object.assign({}, arr[i], op.rec); }
+  else arr.push(Object.assign({}, op.rec));
+}
+async function queueOp(op) {
+  op.uid = uid('o'); op.at = nowIso(); op.by = myName() || 'Owner'; op.device = deviceId;
+  S.ops.push(op); applyLocal(op);
+  await DB.set(K('ops'), S.ops); saveCache();
+  updateSyncBadge(); flush();
+}
+let flushTimer = null;
+async function flush(force) {
+  if (S.syncing) { if (force) setTimeout(() => flush(true), 1500); return; }
+  if (!navigator.onLine && !DEMO) { updateSyncBadge(); return; }
+  S.syncing = true; updateSyncBadge();
+  try {
+    // 1) upload waiting receipt photos
+    for (const entryId of S.rq.slice()) {
+      const r = await DB.get('rc_' + entryId);
+      if (!r) { S.rq = S.rq.filter(x => x !== entryId); continue; }
+      const data = await blobToB64(r.blob);
+      const res = await api('receipt', { id: entryId, mime: r.mime, data }, 90000);
+      await DB.set('rcache_' + res.fileId, r); // keep a local copy for fast viewing
+      S.rq = S.rq.filter(x => x !== entryId); await DB.set(K('rq'), S.rq);
+      const e = S.entries.find(x => x.id === entryId);
+      if (e) {
+        const rec = Object.assign({}, e, { receiptId: res.fileId, receiptMime: r.mime, updatedAt: nowIso() });
+        delete rec.receiptLocal;
+        S.ops.push({ op: 'upsert', table: 'entries', action: 'receipt', rec, summary: '📎 ' + L('Resibo', 'Receipt') + ' · ' + catName(catOf(e.cat)) + ' ' + money(e.amount), uid: uid('o'), at: nowIso(), by: myName(), device: deviceId });
+        applyLocal(S.ops[S.ops.length - 1]); await DB.set(K('ops'), S.ops);
+      }
+    }
+    // 2) send changes, get everyone's latest records back
+    const sending = S.ops.slice();
+    const j = await api('sync', { ops: sending.map(o => { const c = Object.assign({}, o); if (c.rec) { c.rec = Object.assign({}, c.rec); delete c.rec.receiptLocal; } return c; }) });
+    const sent = new Set(sending.map(o => o.uid));
+    S.ops = S.ops.filter(o => !sent.has(o.uid));
+    await DB.set(K('ops'), S.ops);
+    applyServer(j); await saveCache();
+    gateCheck();
+    if (!document.querySelector('.sheet.show') && !tourActive && !document.querySelector('.screen')) render();
+    if (S.ops.length || S.rq.length) setTimeout(flush, 400); // changes made while we were syncing
+  } catch (e) {
+    console.warn('sync failed', e);
+  } finally {
+    S.syncing = false; updateSyncBadge();
+  }
+}
+function updateSyncBadge() {
+  const b = $('#syncBadge'); if (!b) return;
+  const pending = S.ops.length + S.rq.length;
+  if (S.syncing) { b.className = 'sync wait'; b.textContent = '⟳ ' + L('Nagsi-sync…', 'Syncing…'); }
+  else if (!navigator.onLine && !DEMO) { b.className = 'sync off'; b.textContent = '📴 ' + (pending ? pending + ' ' + L('naka-save', 'saved') : 'Offline'); }
+  else if (pending) { b.className = 'sync wait'; b.textContent = '⏳ ' + pending; }
+  else { b.className = 'sync ok'; b.textContent = '✓ ' + L('Synced na', 'Synced'); }
+}
+window.addEventListener('online', () => { updateSyncBadge(); flush(); toast(L('May internet na! Nagsi-sync…', 'Back online! Syncing…'), 'happy'); });
+window.addEventListener('offline', () => { updateSyncBadge(); toast(L('Offline ka — naka-save sa phone, isi-sync mamaya', 'Offline — saved on phone, will sync later'), 'think'); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.settings) flush(); });
+setInterval(() => { if (S.settings && !document.hidden) flush(); }, 60000);
+
+/* ---------- receipts: shrink big iPhone photos before saving ---------- */
+function blobToB64(blob) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+async function shrinkPhoto(file) {
+  if (file.type === 'application/pdf') {
+    if (file.size > 20 * 1024 * 1024) throw new Error(L('Masyadong malaki ang PDF (max 20 MB)', 'PDF is too big (max 20 MB)'));
+    return { blob: file, mime: 'application/pdf' };
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.decoding = 'async'; img.src = url;
+    await img.decode();
+    const MAX = 1600;
+    const w = img.naturalWidth, h = img.naturalHeight;
+    const s = Math.min(1, MAX / Math.max(w, h));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(w * s); cv.height = Math.round(h * s);
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.72));
+    if (!blob) throw new Error('compress');
+    return { blob, mime: 'image/jpeg' };
+  } catch (e) {
+    throw new Error(L('Hindi mabasa ang photo. Subukan ulit o mag-screenshot.', "Couldn't read that photo. Try again or use a screenshot."));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function getReceiptBlob(e) {
+  let r = await DB.get('rc_' + e.id);
+  if (r) return r;
+  if (!e.receiptId) return null;
+  r = await DB.get('rcache_' + e.receiptId);
+  if (r) return r;
+  if (!navigator.onLine && !DEMO) throw new Error(L('Kailangan ng internet para makita ang resibong ito', 'Need internet to view this receipt'));
+  const j = await api('getReceipt', { fileId: e.receiptId }, 60000);
+  if (!j.data) return null;
+  const bin = atob(j.data); const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  r = { blob: new Blob([arr], { type: j.mime }), mime: j.mime };
+  DB.set('rcache_' + e.receiptId, r);
+  return r;
+}
+
+/* =================================================================
+   NUMBERS
+   ================================================================= */
+const live = arr => arr.filter(x => !x.deleted);
+function periodRange(p) {
+  const d = new Date(); const t = ymd(d);
+  if (p === 'today') return [t, t];
+  if (p === 'week') { const s = new Date(d); const dow = (s.getDay() + 6) % 7; s.setDate(s.getDate() - dow); return [ymd(s), t]; }
+  if (p === 'month') return [t.slice(0, 8) + '01', t];
+  if (p === 'year') return [t.slice(0, 5) + '01-01', t];
+  return ['0000', '9999'];
+}
+function totals(from, to) {
+  let inn = 0, out = 0, n = 0;
+  live(S.entries).forEach(e => { if (e.date >= from && e.date <= to) { n++; if (e.type === 'in') inn += +e.amount; else out += +e.amount; } });
+  return { inn, out, profit: inn - out, n };
+}
+function cashOnHand() {
+  let c = num(S.settings && S.settings.startCash);
+  live(S.entries).forEach(e => { c += e.type === 'in' ? +e.amount : -e.amount; });
+  return c;
+}
+function utangSum(kind) { return live(S.utang).filter(u => u.kind === kind && u.status !== 'paid').reduce((a, u) => a + (u.amount - (u.paid || 0)), 0); }
+
+/* =================================================================
+   UI BASICS
+   ================================================================= */
+let toastT;
+function toast(msg, mood) {
+  const t = $('#toast');
+  t.innerHTML = '<div class="m">' + mascot(mood || 'cheer') + '</div><div>' + esc(msg) + '</div>';
+  t.classList.add('show'); clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+const PRAISE = () => [L('Good job, Bossing! 🎉', 'Good job, Boss! 🎉'), L('Ayos! Nailista na! ✍️', 'Nice! All recorded! ✍️'), L('Galing mo, Bossing! 💪', "You're doing great! 💪"), L('Solid! Naka-save na! 🐃', 'Solid! Saved! 🐃')];
+const praise = () => { const p = PRAISE(); return p[Math.floor(Math.random() * p.length)]; };
+
+function setNavLabels() {
+  $$('[data-l]').forEach(el => { const k = el.getAttribute('data-l'); el.textContent = NAVL[k][LANG === 'tl' ? 0 : 1]; });
+  $('#nav-utang').classList.toggle('hidden', !(S.settings && S.settings.utangOn));
+}
+function go(v) {
+  S.view = v; closeSheet(true);
+  $$('.nav button[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  render(); window.scrollTo(0, 0);
+}
+function render() {
+  if (!S.settings) return;
+  $('#bizName').textContent = S.settings.businessName || '';
+  setNavLabels(); updateSyncBadge();
+  const v = { home: viewHome, list: viewList, utang: viewUtang, report: viewReport, settings: viewSettings, log: viewLog }[S.view] || viewHome;
+  $('#view').innerHTML = '<div class="view">' + v() + '</div>';
+  bindView();
+}
+function bindView() {
+  $$('#view [data-act]').forEach(el => el.addEventListener('click', ev => {
+    const a = el.dataset.act, arg = el.dataset.arg;
+    ACTIONS[a] && ACTIONS[a](arg, el, ev);
+  }));
+  const s = $('#listSearch');
+  if (s) s.addEventListener('input', () => { S.listQ = s.value; const pos = s.selectionStart; render(); const n = $('#listSearch'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { } });
+}
+
+/* =================================================================
+   VIEWS
+   ================================================================= */
+function greet() {
+  const h = new Date().getHours();
+  const n = myName() ? ', ' + esc(myName().split(' ')[0]) : '';
+  if (h < 12) return L('Magandang umaga', 'Good morning') + n + '! ☀️';
+  if (h < 18) return L('Magandang hapon', 'Good afternoon') + n + '! 🌤️';
+  return L('Magandang gabi', 'Good evening') + n + '! 🌙';
+}
+function viewHome() {
+  const [f, t] = periodRange(S.period);
+  const T = totals(f, t);
+  const todayN = totals(today(), today()).n;
+  let tip = L('Pindutin ang <b>+</b> para maglista ng benta o gastos.', 'Tap <b>+</b> to record a sale or expense.');
+  let mood = 'wave';
+  if (new Date().getHours() >= 17 && todayN === 0) { tip = L("Oops, nakalimutan mo ilista 'to! Wala pang listahan ngayon.", 'Oops, nothing recorded yet today!'); mood = 'think'; }
+  else if (todayN > 0 && T.profit > 0 && S.period === 'today') { tip = L('Solid! Kumita ka ngayon! 💪', "Solid! You're earning today! 💪"); mood = 'cheer'; }
+  const pl = { today: L('Ngayon', 'Today'), week: L('Linggong ito', 'This week'), month: L('Buwang ito', 'This month'), year: L('Taong ito', 'This year') };
+  const recent = live(S.entries).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)).slice(0, 5);
+  const sub = S.sub && S.sub.state === 'trial' && S.sub.daysLeft <= 5
+    ? '<div class="card small b" style="background:#fff3cd">⏳ ' + L('Free trial: ' + S.sub.daysLeft + ' araw na lang', 'Free trial: ' + S.sub.daysLeft + ' days left') + '</div>' : '';
+  return '<div class="hello"><div class="m">' + mascot(mood, 'hop') + '</div><div class="bubble">' + greet() + '<small>' + tip + '</small></div></div>' + sub +
+    '<div class="chips">' + Object.keys(pl).map(k => '<button class="chip ' + (S.period === k ? 'on' : '') + '" data-act="period" data-arg="' + k + '">' + pl[k] + '</button>').join('') + '</div>' +
+    '<div class="grid">' +
+    '<div class="stat s-in" id="c-in"><span class="em">💚</span><div class="lbl">' + L('Kita', 'Money In') + '</div><div><div class="amt">' + money(T.inn) + '</div><div class="sub">' + pl[S.period] + '</div></div></div>' +
+    '<div class="stat s-out" id="c-out"><span class="em">🧡</span><div class="lbl">' + L('Gastos', 'Expenses') + '</div><div><div class="amt">' + money(T.out) + '</div><div class="sub">' + pl[S.period] + '</div></div></div>' +
+    '<div class="stat s-profit big" id="c-profit"><span class="em">' + (T.profit >= 0 ? '🐃' : '😟') + '</span><div class="lbl">' + L('Tubo (Kita − Gastos)', 'Profit (In − Out)') + '</div><div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + (T.profit >= 0 ? L('Kumikita ka! Tuloy lang!', "You're in profit! Keep going!") : L('Mas malaki ang gastos — kaya pa yan!', 'Spending more than earning — you got this!')) + '</div></div></div>' +
+    (S.settings.utangOn ? '<div class="stat s-owed" data-act="go" data-arg="utang"><span class="em">🤝</span><div class="lbl">' + L('Utang sa Akin', 'Owed to Me') + '</div><div class="amt">' + money(utangSum('owed')) + '</div></div>' +
+      '<div class="stat s-owe" data-act="go" data-arg="utang"><span class="em">📝</span><div class="lbl">' + L('Utang Ko', 'I Owe') + '</div><div class="amt">' + money(utangSum('owe')) + '</div></div>' : '') +
+    '</div>' +
+    '<div class="cashbox" id="cash-box"><div style="font-size:30px">💵</div><div><div class="lbl">' + L('Pera mo ngayon (tantiya)', 'Cash on hand (estimate)') + '</div><div class="amt">' + money(cashOnHand()) + '</div></div></div>' +
+    '<h3>' + L('Mga huling listahan', 'Latest records') + '</h3>' +
+    '<div class="card">' + (recent.length ? recent.map(itemHtml).join('') + '<button class="btn soft" style="margin-top:10px" data-act="go" data-arg="list">' + L('Tingnan lahat', 'See all') + ' →</button>'
+      : '<div class="empty"><div class="m">' + mascot('think') + '</div>' + L('Wala pang listahan. Pindutin ang + para magsimula!', 'No records yet. Tap + to start!') + '</div>') + '</div>';
+}
+function itemHtml(e) {
+  const c = catOf(e.cat);
+  const m = METHODS[e.method];
+  const sub = [m ? m[1] : '', e.note ? esc(e.note) : '', e.by ? '✍️ ' + esc(e.by) : ''].filter(Boolean).join(' · ');
+  return '<div class="item" data-act="edit" data-arg="' + e.id + '"><div class="ic ' + e.type + '">' + c.i + '</div><div class="mid"><div class="t1">' + esc(catName(c)) + (e.receiptId || e.receiptLocal ? ' 📎' : '') + '</div><div class="t2">' + (sub || prettyDate(e.date)) + '</div></div><div class="val ' + e.type + '">' + (e.type === 'in' ? '+' : '−') + money(e.amount) + '</div></div>';
+}
+function viewList() {
+  const q = S.listQ.trim().toLowerCase();
+  let arr = live(S.entries).filter(e => S.listFilter === 'all' || e.type === S.listFilter);
+  if (q) arr = arr.filter(e => (catName(catOf(e.cat)) + ' ' + (e.note || '') + ' ' + (e.by || '') + ' ' + e.amount).toLowerCase().includes(q));
+  arr.sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt));
+  const groups = {}; arr.slice(0, 400).forEach(e => (groups[e.date] = groups[e.date] || []).push(e));
+  const f = { all: L('Lahat', 'All'), in: L('Kita', 'Money In'), out: L('Gastos', 'Expenses') };
+  let h = '<h2>📒 ' + L('Listahan', 'Records') + '</h2><input class="search" id="listSearch" placeholder="🔎 ' + L('Hanapin…', 'Search…') + '" value="' + esc(S.listQ) + '">' +
+    '<div class="chips">' + Object.keys(f).map(k => '<button class="chip ' + (S.listFilter === k ? 'on' : '') + '" data-act="lfilter" data-arg="' + k + '">' + f[k] + '</button>').join('') + '</div>';
+  const days = Object.keys(groups);
+  if (!days.length) return h + '<div class="card empty"><div class="m">' + mascot('think') + '</div>' + L('Walang nakita.', 'Nothing found.') + '</div>';
+  days.forEach(d => {
+    const tin = groups[d].filter(e => e.type === 'in').reduce((a, e) => a + +e.amount, 0);
+    const tout = groups[d].filter(e => e.type === 'out').reduce((a, e) => a + +e.amount, 0);
+    h += '<div class="dayhead"><span>' + prettyDate(d) + '</span><span><span class="val in">+' + money(tin) + '</span> · <span class="val out">−' + money(tout) + '</span></span></div><div class="card" style="padding:4px 12px">' + groups[d].map(itemHtml).join('') + '</div>';
+  });
+  return h;
+}
+function viewUtang() {
+  const k = S.utKind;
+  const arr = live(S.utang).filter(u => u.kind === k).sort((a, b) => (a.status === 'paid') - (b.status === 'paid') || String(a.due || '9').localeCompare(String(b.due || '9')));
+  const t = today();
+  let h = '<h2>🤝 Utang</h2><div class="seg"><button class="' + (k === 'owed' ? 'on n' : '') + '" data-act="utkind" data-arg="owed">' + L('Utang sa Akin', 'Owed to Me') + '</button><button class="' + (k === 'owe' ? 'on n' : '') + '" data-act="utkind" data-arg="owe">' + L('Utang Ko', 'I Owe') + '</button></div>' +
+    '<div class="card" style="background:' + (k === 'owed' ? 'var(--rose)' : '#efe9ff') + '"><div class="small b">' + (k === 'owed' ? L('Kabuuang may utang sa iyo', 'Total others owe you') : L('Kabuuang utang mo', 'Total you owe')) + '</div><div style="font-size:26px;font-weight:900">' + money(utangSum(k)) + '</div>' +
+    '<div class="small muted b" style="margin-top:4px">' + (k === 'owed' ? L('Kapag nagbayad sila, kusa itong maililista bilang Kita.', 'When they pay, it is recorded as Money In automatically.') : L('Kapag nagbayad ka, kusa itong maililista bilang Gastos.', 'When you pay, it is recorded as an Expense automatically.')) + '</div></div>' +
+    '<button class="btn pink" data-act="addUtang" style="margin-bottom:12px">+ ' + (k === 'owed' ? L('Bagong may utang sa akin', 'Someone owes me') : L('Bagong utang ko', 'New debt I owe')) + '</button>';
+  if (!arr.length) return h + '<div class="card empty"><div class="m">' + mascot('happy') + '</div>' + L('Walang utang dito. Yehey!', 'No credit here. Yay!') + '</div>';
+  h += '<div class="card" style="padding:4px 14px">' + arr.map(u => {
+    const left = u.amount - (u.paid || 0), pct = Math.min(100, Math.round((u.paid || 0) / u.amount * 100) || 0);
+    const late = u.status !== 'paid' && u.due && u.due < t;
+    return '<div class="ut" data-act="openUtang" data-arg="' + u.id + '"><div class="r1"><span>' + esc(u.name) + '</span><span>' + (u.status === 'paid' ? '<span class="tag ok">✓ ' + L('Bayad na', 'Paid') + '</span>' : money(left)) + '</span></div>' +
+      '<div class="r2">' + money(u.amount) + (u.due ? ' · ' + L('Due', 'Due') + ' ' + prettyDate(u.due) : '') + (late ? ' · <span class="tag">' + L('Lampas na', 'Overdue') + '</span>' : '') + (u.note ? ' · ' + esc(u.note) : '') + '</div>' +
+      '<div class="prog"><i style="width:' + pct + '%"></i></div></div>';
+  }).join('') + '</div>';
+  return h;
+}
+function viewReport() {
+  if (!S.repMonth) S.repMonth = today().slice(0, 7);
+  const isYear = S.repMode === 'year';
+  const y = +S.repMonth.slice(0, 4), m = +S.repMonth.slice(5, 7);
+  const from = isYear ? y + '-01-01' : S.repMonth + '-01';
+  const lastDay = new Date(y, m, 0).getDate();
+  const to = isYear ? y + '-12-31' : S.repMonth + '-' + pad(lastDay);
+  const T = totals(from, to);
+  const title = isYear ? String(y) : MONTHS_FULL[LANG][m - 1] + ' ' + y;
+  const ents = live(S.entries).filter(e => e.date >= from && e.date <= to);
+  // bars
+  const n = isYear ? 12 : lastDay; const bi = Array(n).fill(0), bo = Array(n).fill(0);
+  ents.forEach(e => { const i = isYear ? +e.date.slice(5, 7) - 1 : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
+  const mx = Math.max(1, ...bi, ...bo);
+  const bars = '<div class="bars">' + bi.map((v, i) => '<div class="bar" title="' + money(v) + ' / ' + money(bo[i]) + '"><i class="in" style="height:' + (v / mx * 100) + '%"></i><i class="out" style="height:' + (bo[i] / mx * 100) + '%"></i></div>').join('') + '</div>' +
+    '<div class="barlbl">' + bi.map((v, i) => '<span>' + (isYear ? MONTHS[LANG][i].slice(0, 1) : ((i + 1) % 5 === 0 || i === 0 ? i + 1 : '')) + '</span>').join('') + '</div>' +
+    '<div class="legend"><span><i style="background:#7fd19a"></i>' + L('Kita', 'Money In') + '</span><span><i style="background:#ffb39a"></i>' + L('Gastos', 'Expenses') + '</span></div>';
+  const byCat = type => {
+    const g = {}; ents.filter(e => e.type === type).forEach(e => g[e.cat] = (g[e.cat] || 0) + +e.amount);
+    const tot = Object.values(g).reduce((a, b) => a + b, 0) || 1;
+    const rows = Object.keys(g).sort((a, b) => g[b] - g[a]);
+    if (!rows.length) return '<div class="muted small b">' + L('Wala pa', 'None yet') + '</div>';
+    return rows.map(k => { const c = catOf(k); return '<div class="hbar"><div class="h"><span>' + c.i + ' ' + esc(catName(c)) + '</span><span>' + money(g[k]) + '</span></div><div class="track"><div class="fill" style="width:' + (g[k] / tot * 100) + '%;background:' + (type === 'in' ? '#7fd19a' : '#ffb39a') + '"></div></div></div>'; }).join('');
+  };
+  return '<div class="printhead"><b style="font-size:20px">' + esc(S.settings.businessName) + '</b> — ' + L('Ulat', 'Report') + ': ' + title + '</div>' +
+    '<h2 class="noprint">📊 ' + L('Ulat', 'Reports') + '</h2>' +
+    '<div class="seg noprint"><button class="' + (!isYear ? 'on n' : '') + '" data-act="repmode" data-arg="month">' + L('Buwanan', 'Monthly') + '</button><button class="' + (isYear ? 'on n' : '') + '" data-act="repmode" data-arg="year">' + L('Taunan', 'Yearly') + '</button></div>' +
+    '<div class="pernav noprint"><button data-act="repnav" data-arg="-1">‹</button><b>' + title + '</b><button data-act="repnav" data-arg="1">›</button></div>' +
+    '<div class="grid"><div class="stat s-in"><div class="lbl">💚 ' + L('Kita', 'Money In') + '</div><div class="amt">' + money(T.inn) + '</div></div>' +
+    '<div class="stat s-out"><div class="lbl">🧡 ' + L('Gastos', 'Expenses') + '</div><div class="amt">' + money(T.out) + '</div></div>' +
+    '<div class="stat s-profit big"><div class="lbl">🐃 ' + L('Tubo', 'Profit') + '</div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + T.n + ' ' + L('listahan', 'records') + '</div></div></div>' +
+    '<div class="card" style="margin-top:12px"><div class="b">' + (isYear ? L('Kada buwan', 'By month') : L('Kada araw', 'By day')) + '</div>' + bars + '</div>' +
+    '<div class="card"><div class="b">🧡 ' + L('Saan napunta ang gastos', 'Where the money went') + '</div>' + byCat('out') + '</div>' +
+    '<div class="card"><div class="b">💚 ' + L('Saan galing ang kita', 'Where the money came from') + '</div>' + byCat('in') + '</div>' +
+    '<div class="row2 noprint"><button class="btn soft" data-act="exportCsv">📗 Excel</button><button class="btn soft" data-act="print">📄 PDF / Print</button></div>';
+}
+function viewSettings() {
+  const s = S.settings;
+  const cats = t => (s.categories || []).filter(c => c.t === t && !c.sys).map(c => '<span class="cat">' + c.i + ' ' + esc(catName(c)) + ' <b data-act="delCat" data-arg="' + c.k + '">×</b></span>').join('') +
+    '<button class="cat" data-act="addCat" data-arg="' + t + '">＋ ' + L('Dagdag', 'Add') + '</button>';
+  const subTxt = !S.sub ? '' : S.sub.state === 'active' ? L('Active hanggang ', 'Active until ') + S.sub.until : S.sub.state === 'trial' ? L('Free trial: ' + S.sub.daysLeft + ' araw pa', 'Free trial: ' + S.sub.daysLeft + ' days left') : L('Tapos na', 'Ended');
+  return '<h2>⚙️ Settings</h2>' +
+    '<div class="card"><div class="b">🙋 ' + L('Ikaw (sa phone na ito)', 'You (on this phone)') + '</div>' +
+    '<div class="set"><div>' + L('Pangalan mo', 'Your name') + '<div class="muted">' + esc(myName() || '—') + '</div></div><button class="lnk" data-act="changeName">' + L('Palitan', 'Change') + '</button></div>' +
+    '<div class="set"><div>' + L('Wika', 'Language') + '</div><div class="seg" style="margin:0;padding:3px;box-shadow:none;background:var(--sky2)"><button style="padding:8px 12px" class="' + (LANG === 'tl' ? 'on n' : '') + '" data-act="lang" data-arg="tl">Tagalog</button><button style="padding:8px 12px" class="' + (LANG === 'en' ? 'on n' : '') + '" data-act="lang" data-arg="en">English</button></div></div></div>' +
+    '<div class="card"><div class="b">🏪 ' + L('Negosyo', 'Business') + '</div>' +
+    '<div class="set"><div>' + L('Pangalan ng negosyo', 'Business name') + '<div class="muted">' + esc(s.businessName) + '</div></div><button class="lnk" data-act="editBiz">' + L('Palitan', 'Change') + '</button></div>' +
+    '<div class="set"><div>Currency<div class="muted">' + CURRENCIES[cur()].f + ' ' + CURRENCIES[cur()][LANG] + ' (' + sym() + ')</div></div><button class="lnk" data-act="editCur">' + L('Palitan', 'Change') + '</button></div>' +
+    '<div class="set"><div>' + L('Panimulang pera', 'Starting cash') + '<div class="muted">' + money(num(s.startCash)) + '</div></div><button class="lnk" data-act="editStart">' + L('Palitan', 'Change') + '</button></div>' +
+    '<div class="set"><div>' + L('May pautang / utang?', 'Track credit (utang)?') + '</div><button class="switch ' + (s.utangOn ? 'on' : '') + '" data-act="toggleUtang" aria-label="utang"></button></div></div>' +
+    '<div class="card"><div class="b">💳 ' + L('Paraan ng bayad', 'Payment methods') + '</div><div class="catrow" style="margin-top:10px">' +
+    Object.keys(METHODS).map(k => '<button class="cat ' + ((s.methods || []).includes(k) ? 'sel' : '') + '" data-act="toggleMethod" data-arg="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('') + '</div></div>' +
+    '<div class="card"><div class="b">💚 ' + L('Uri ng kita', 'Money-in categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('in') + '</div>' +
+    '<div class="b" style="margin-top:16px">🧡 ' + L('Uri ng gastos', 'Expense categories') + '</div><div class="catrow" style="margin-top:10px">' + cats('out') + '</div></div>' +
+    '<div class="card">' +
+    '<div class="set"><div>📜 ' + L('Kasaysayan ng pagbabago', 'Activity log') + '<div class="muted">' + L('Sino ang nagdagdag/nag-edit', 'Who added or changed what') + '</div></div><button class="lnk" data-act="go" data-arg="log">' + L('Tingnan', 'Open') + '</button></div>' +
+    '<div class="set"><div>🎓 ' + L('Ulitin ang tutorial', 'Replay tutorial') + '</div><button class="lnk" data-act="replayTour">' + L('Simulan', 'Start') + '</button></div>' +
+    (isStandalone() ? '' : '<div class="set"><div>📲 ' + L('I-add sa Home Screen', 'Add to Home Screen') + '</div><button class="lnk" data-act="showInstall">' + L('Paano?', 'How?') + '</button></div>') +
+    '<div class="set"><div>🔄 Sync<div class="muted">' + (S.lastOk ? L('Huling sync: ', 'Last sync: ') + timeAgo(new Date(S.lastOk).toISOString()) : '—') + '</div></div><button class="lnk" data-act="syncNow">' + L('I-sync ngayon', 'Sync now') + '</button></div>' +
+    '<div class="set"><div>⭐ Subscription<div class="muted">' + subTxt + '</div></div></div></div>' +
+    '<div class="muted small b" style="text-align:center;margin:16px 0">Kwentoink v' + VERSION + (DEMO ? ' · DEMO' : '') + ' 🐃</div>';
+}
+function viewLog() {
+  const icon = { add: '➕', edit: '✏️', delete: '🗑️', pay: '💸', receipt: '📎', settings: '⚙️', setup: '🎉', upsert: '✏️' };
+  const word = { add: L('nagdagdag', 'added'), edit: L('nag-edit', 'edited'), delete: L('nagbura', 'deleted'), pay: L('nagtala ng bayad', 'recorded payment'), receipt: L('naglagay ng resibo', 'attached receipt'), settings: L('binago ang settings', 'changed settings'), setup: L('nag-setup ng negosyo', 'set up the business'), upsert: L('nag-update', 'updated') };
+  let h = '<h2>📜 ' + L('Kasaysayan', 'Activity log') + '</h2><button class="btn soft" data-act="go" data-arg="settings" style="margin-bottom:12px">← Settings</button>';
+  const pend = S.ops.map(o => ({ time: o.at, by: o.by, action: o.action || o.op, summary: o.summary, pending: true }));
+  const rows = pend.reverse().concat(S.log);
+  if (!rows.length) return h + '<div class="card empty"><div class="m">' + mascot('think') + '</div>' + ((!navigator.onLine && !DEMO) ? L('Kailangan ng internet para makita ang buong kasaysayan.', 'Need internet to load the full history.') : L('Wala pa.', 'Nothing yet.')) + '</div>';
+  return h + '<div class="card" style="padding:6px 14px">' + rows.slice(0, 300).map(r => '<div class="log"><div class="av">' + (icon[r.action] || '•') + '</div><div><div class="t1">' + esc(r.by || '?') + ' ' + (word[r.action] || esc(r.action)) + '</div><div class="t2">' + esc(r.summary || '') + '</div><div class="t2">' + timeAgo(r.time) + (r.pending ? ' · ⏳ ' + L('hindi pa naka-sync', 'not synced yet') : '') + '</div></div></div>').join('') + '</div>';
+}
+async function loadLog() {
+  if (!navigator.onLine && !DEMO) return;
+  try { const j = await api('log', {}); S.log = j.log || []; DB.set(K('log'), S.log); if (S.view === 'log') render(); } catch (e) { }
+}
+
+/* =================================================================
+   ACTIONS
+   ================================================================= */
+const ACTIONS = {
+  period: a => { S.period = a; render(); },
+  go: a => { go(a); if (a === 'log') loadLog(); },
+  lfilter: a => { S.listFilter = a; render(); },
+  edit: id => openEntry(S.entries.find(e => e.id === id)),
+  utkind: a => { S.utKind = a; render(); },
+  addUtang: () => openUtangForm(),
+  openUtang: id => openUtangDetail(S.utang.find(u => u.id === id)),
+  repmode: a => { S.repMode = a; render(); },
+  repnav: a => {
+    const y = +S.repMonth.slice(0, 4), m = +S.repMonth.slice(5, 7);
+    const d = S.repMode === 'year' ? new Date(y + (+a), m - 1, 1) : new Date(y, m - 1 + (+a), 1);
+    S.repMonth = d.getFullYear() + '-' + pad(d.getMonth() + 1); render();
+  },
+  exportCsv: () => exportCsv(),
+  print: () => window.print(),
+  lang: a => { LANG = a; LS.set(K('lang'), a); document.documentElement.lang = a === 'tl' ? 'tl' : 'en'; render(); },
+  changeName: () => askName(true).then(render),
+  editBiz: () => promptSheet(L('Pangalan ng negosyo', 'Business name'), S.settings.businessName, 'text').then(v => { if (v) saveSettings({ businessName: v.trim() }, L('Binago ang pangalan ng negosyo', 'Renamed business') + ': ' + v); }),
+  editStart: () => promptSheet(L('Panimulang pera', 'Starting cash'), S.settings.startCash || 0, 'money').then(v => { if (v !== null) saveSettings({ startCash: num(v) }, L('Panimulang pera', 'Starting cash') + ': ' + money(num(v))); }),
+  editCur: () => pickSheet('Currency', Object.keys(CURRENCIES).map(k => ({ v: k, label: CURRENCIES[k].f + ' ' + CURRENCIES[k][LANG] + ' (' + CURRENCIES[k].sym + ')' })), cur()).then(v => { if (v) { _nf = {}; saveSettings({ currency: v }, 'Currency: ' + v); } }),
+  toggleUtang: () => saveSettings({ utangOn: !S.settings.utangOn }, 'Utang: ' + (!S.settings.utangOn ? 'ON' : 'OFF')),
+  toggleMethod: k => { const m = (S.settings.methods || []).slice(); const i = m.indexOf(k); if (i >= 0) { if (m.length === 1) return; m.splice(i, 1); } else m.push(k); saveSettings({ methods: m }, METHODS[k][1]); },
+  delCat: (k, el, ev) => { ev.stopPropagation(); if (!confirm(L('Alisin ang uring ito? (Hindi mabubura ang mga lumang listahan)', 'Remove this category? (Old records stay)'))) return; saveSettings({ categories: S.settings.categories.filter(c => c.k !== k) }, L('Inalis ang uri', 'Removed category')); },
+  addCat: t => promptSheet(t === 'in' ? L('Bagong uri ng kita', 'New money-in category') : L('Bagong uri ng gastos', 'New expense category'), '', 'text').then(v => {
+    if (!v) return; const cats = (S.settings.categories || []).slice(); cats.push({ k: 'c_' + uid(), t, i: '🏷️', name: v.trim() });
+    saveSettings({ categories: cats }, L('Bagong uri', 'New category') + ': ' + v);
+  }),
+  replayTour: () => { go('home'); setTimeout(() => runTour(isOwnerDevice() ? 'full' : 'short'), 300); },
+  showInstall: () => installGuide(true),
+  syncNow: () => { flush(true); loadLog(); toast(L('Nagsi-sync…', 'Syncing…'), 'happy'); }
+};
+function saveSettings(data, summary) {
+  queueOp({ op: 'settings', data, action: 'settings', summary }).then(render);
+}
+
+/* =================================================================
+   SHEETS (pop-up panels)
+   ================================================================= */
+let sheetEl, backEl, sheetOnClose;
+function openSheet(html, onClose) {
+  closeSheet(true);
+  backEl = document.createElement('div'); backEl.className = 'backdrop';
+  sheetEl = document.createElement('div'); sheetEl.className = 'sheet';
+  sheetEl.innerHTML = '<div class="grab"></div>' + html;
+  document.body.append(backEl, sheetEl);
+  backEl.addEventListener('click', () => closeSheet());
+  sheetOnClose = onClose;
+  requestAnimationFrame(() => { backEl.classList.add('show'); sheetEl.classList.add('show'); });
+  return sheetEl;
+}
+function closeSheet(instant) {
+  if (!sheetEl) return;
+  const s = sheetEl, b = backEl, cb = sheetOnClose; sheetEl = backEl = sheetOnClose = null;
+  if (instant) { s.remove(); b.remove(); } else { s.classList.remove('show'); b.classList.remove('show'); setTimeout(() => { s.remove(); b.remove(); }, 250); }
+  cb && cb();
+}
+function promptSheet(title, value, kind) {
+  return new Promise(res => {
+    let done = false;
+    const el = openSheet('<div class="sheet-head"><h2>' + esc(title) + '</h2><button class="x" data-x>×</button></div>' +
+      (kind === 'money' ? '<div class="amtwrap"><span>' + sym() + '</span><input id="pv" inputmode="decimal" value="' + esc(value) + '"></div>' : '<input class="inp" id="pv" value="' + esc(value) + '" style="margin-bottom:12px">') +
+      '<button class="btn main" data-ok>' + L('I-save', 'Save') + '</button>', () => { if (!done) res(null); });
+    const i = el.querySelector('#pv'); setTimeout(() => i.focus(), 300);
+    el.querySelector('[data-x]').onclick = () => closeSheet();
+    el.querySelector('[data-ok]').onclick = () => { done = true; const v = i.value; closeSheet(); res(v); };
+  });
+}
+function pickSheet(title, opts, sel) {
+  return new Promise(res => {
+    let done = false;
+    const el = openSheet('<div class="sheet-head"><h2>' + esc(title) + '</h2><button class="x" data-x>×</button></div><div class="opts">' +
+      opts.map(o => '<button class="opt ' + (o.v === sel ? 'sel' : '') + '" data-v="' + o.v + '">' + o.label + '</button>').join('') + '</div>', () => { if (!done) res(null); });
+    el.querySelector('[data-x]').onclick = () => closeSheet();
+    el.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { done = true; closeSheet(); res(b.dataset.v); });
+  });
+}
+
+/* ---------- add / edit entry ---------- */
+function openEntry(existing, preset) {
+  const e = existing ? Object.assign({}, existing) : Object.assign({ id: uid('e'), type: 'in', amount: '', cat: '', method: (S.settings.methods || ['cash'])[0], date: today(), note: '' }, preset || {});
+  const isNew = !existing;
+  let pending = null; // new receipt {blob,mime}
+  const cats = () => (S.settings.categories || []).filter(c => c.t === e.type && !c.sys);
+  if (!e.cat) e.cat = (cats()[0] || {}).k;
+  const el = openSheet(
+    '<div class="sheet-head"><h2>' + (isNew ? L('Maglista', 'New record') : L('I-edit', 'Edit record')) + '</h2><button class="x" id="sh-close">×</button></div>' +
+    '<div class="seg" id="sh-type"><button data-t="in" class="in">💚 ' + L('Kita (Pumasok)', 'Money In') + '</button><button data-t="out" class="out">🧡 ' + L('Gastos (Lumabas)', 'Expense') + '</button></div>' +
+    '<div class="amtwrap" id="sh-amt"><span>' + sym() + '</span><input id="f-amt" inputmode="decimal" placeholder="0.00" value="' + (e.amount || '') + '" autocomplete="off"></div>' +
+    '<div class="field" id="sh-cats"><label>' + L('Para saan?', 'What for?') + '</label><div class="catgrid" id="f-cats"></div></div>' +
+    '<div class="field"><label>' + L('Paano binayaran?', 'Paid how?') + '</label><div class="catgrid" id="f-meth"></div></div>' +
+    '<div class="row2"><div class="field"><label>' + L('Petsa', 'Date') + '</label><input class="inp" type="date" id="f-date" value="' + e.date + '"></div></div>' +
+    '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="f-note" placeholder="' + L('hal. 3 kahon ng softdrinks', 'e.g. 3 cases of soda') + '" value="' + esc(e.note || '') + '"></div>' +
+    '<div class="field" id="sh-rcpt"><label>' + L('Resibo (opsyonal)', 'Receipt (optional)') + '</label><label class="rcpt" for="f-file"><div class="ph" id="f-ph">📷</div><div><div class="b" id="f-rtxt">' + L('Kuhanan o pumili ng resibo', 'Take or choose a photo') + '</div><div class="small muted b">' + L('Kahit malaking iPhone photo, ok lang!', 'Big iPhone photos are fine!') + '</div></div></label>' +
+    '<input type="file" id="f-file" accept="image/*,application/pdf" class="hidden"></div>' +
+    '<button class="btn main" id="f-save">' + (isNew ? L('I-save', 'Save') : L('I-save ang pagbabago', 'Save changes')) + '</button>' +
+    (isNew ? '' : '<button class="btn danger" id="f-del" style="margin-top:10px">🗑️ ' + L('Burahin', 'Delete') + '</button>') +
+    (!isNew && e.by ? '<div class="small muted b" style="text-align:center;margin-top:12px">✍️ ' + L('Inilista ni ', 'Recorded by ') + esc(e.by) + (e.createdAt ? ' · ' + timeAgo(e.createdAt) : '') + '</div>' : '')
+  );
+  const paintType = () => {
+    el.querySelectorAll('#sh-type button').forEach(b => b.classList.toggle('on', b.dataset.t === e.type));
+    el.querySelector('#f-cats').innerHTML = cats().map(c => '<button class="cat ' + (c.k === e.cat ? 'sel' : '') + '" data-c="' + c.k + '">' + c.i + ' ' + esc(catName(c)) + '</button>').join('');
+    el.querySelectorAll('#f-cats .cat').forEach(b => b.onclick = () => { e.cat = b.dataset.c; paintType(); });
+  };
+  const paintMeth = () => {
+    el.querySelector('#f-meth').innerHTML = (S.settings.methods || ['cash']).map(k => '<button class="cat ' + (k === e.method ? 'sel' : '') + '" data-m="' + k + '">' + METHODS[k][0] + ' ' + METHODS[k][1] + '</button>').join('');
+    el.querySelectorAll('#f-meth .cat').forEach(b => b.onclick = () => { e.method = b.dataset.m; paintMeth(); });
+  };
+  el.querySelectorAll('#sh-type button').forEach(b => b.onclick = () => { if (e.type === b.dataset.t) return; e.type = b.dataset.t; e.cat = (cats()[0] || {}).k; paintType(); });
+  paintType(); paintMeth();
+  el.querySelector('#sh-close').onclick = () => closeSheet();
+  // existing receipt preview
+  const showThumb = async r => {
+    const ph = el.querySelector('#f-ph');
+    if (r.mime === 'application/pdf') { ph.textContent = '📄'; } else { ph.outerHTML = '<img id="f-ph" src="' + URL.createObjectURL(r.blob) + '" alt="">'; }
+    el.querySelector('#f-rtxt').textContent = L('May resibo ✓ (pindutin para palitan)', 'Receipt attached ✓ (tap to change)');
+  };
+  if (!isNew && (e.receiptId || e.receiptLocal)) {
+    el.querySelector('#f-rtxt').textContent = L('May resibo ✓', 'Receipt attached ✓');
+    const v = document.createElement('button'); v.className = 'btn soft'; v.style.marginTop = '8px'; v.textContent = '👀 ' + L('Tingnan ang resibo', 'View receipt');
+    v.onclick = () => viewReceipt(e); el.querySelector('#sh-rcpt').appendChild(v);
+    getReceiptBlob(e).then(r => r && showThumb(r)).catch(() => { });
+  }
+  el.querySelector('#f-file').onchange = async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    el.querySelector('#f-rtxt').textContent = L('Inaayos ang photo…', 'Preparing photo…');
+    try { pending = await shrinkPhoto(f); showThumb(pending); }
+    catch (err) { pending = null; el.querySelector('#f-rtxt').textContent = err.message; }
+  };
+  const amt = el.querySelector('#f-amt');
+  if (isNew) setTimeout(() => { if (!tourActive) amt.focus(); }, 320);
+  el.querySelector('#f-save').onclick = async () => {
+    const a = num(amt.value);
+    if (!(a > 0)) { amt.parentElement.style.borderColor = 'var(--pink)'; amt.parentElement.style.boxShadow = '0 0 0 3px var(--pink)'; toast(L('Ilagay ang halaga', 'Enter the amount'), 'think'); return; }
+    const rec = Object.assign({}, e, {
+      amount: a, date: el.querySelector('#f-date').value || today(), note: el.querySelector('#f-note').value.trim(),
+      catLabel: catName(catOf(e.cat)), updatedAt: nowIso()
+    });
+    if (isNew) { rec.createdAt = nowIso(); rec.by = myName() || 'Owner'; rec.device = deviceId; rec.deleted = false; }
+    if (pending) {
+      await DB.set('rc_' + rec.id, pending);
+      rec.receiptLocal = true;
+      if (!S.rq.includes(rec.id)) S.rq.push(rec.id);
+      await DB.set(K('rq'), S.rq);
+    }
+    const sign = rec.type === 'in' ? '+' : '−';
+    closeSheet();
+    await queueOp({ op: 'upsert', table: 'entries', action: isNew ? 'add' : 'edit', rec, summary: sign + money(a) + ' · ' + rec.catLabel + (rec.note ? ' · ' + rec.note : '') });
+    render(); toast(praise(), 'cheer');
+  };
+  const del = el.querySelector('#f-del');
+  if (del) del.onclick = async () => {
+    if (!confirm(L('Sigurado ka? Mabubura ang listahang ito.', 'Are you sure? This record will be deleted.'))) return;
+    const rec = Object.assign({}, e, { deleted: true, updatedAt: nowIso() });
+    closeSheet();
+    await queueOp({ op: 'upsert', table: 'entries', action: 'delete', rec, summary: (e.type === 'in' ? '+' : '−') + money(e.amount) + ' · ' + catName(catOf(e.cat)) });
+    render(); toast(L('Nabura na', 'Deleted'), 'happy');
+  };
+}
+async function viewReceipt(e) {
+  try {
+    const r = await getReceiptBlob(e);
+    if (!r) { toast(L('Wala pang kopya ng resibo', 'Receipt not available yet'), 'think'); return; }
+    const url = URL.createObjectURL(r.blob);
+    if (r.mime === 'application/pdf') { window.open(url, '_blank'); return; }
+    openSheet('<div class="sheet-head"><h2>📎 ' + L('Resibo', 'Receipt') + '</h2><button class="x" data-x>×</button></div><img src="' + url + '" style="width:100%;border-radius:16px;box-shadow:var(--shadow)">').querySelector('[data-x]').onclick = () => closeSheet();
+  } catch (err) { toast(err.message, 'sad'); }
+}
+
+/* ---------- utang ---------- */
+function openUtangForm(existing) {
+  const k = existing ? existing.kind : S.utKind;
+  const u = existing ? Object.assign({}, existing) : { id: uid('u'), kind: k, name: '', amount: '', paid: 0, due: '', note: '', status: 'open', payments: [] };
+  const el = openSheet('<div class="sheet-head"><h2>' + (k === 'owed' ? L('May utang sa akin', 'Someone owes me') : L('Utang ko', 'I owe')) + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="field"><label>' + (k === 'owed' ? L('Sino ang may utang?', 'Who owes you?') : L('Kanino ka may utang?', 'Who do you owe?')) + '</label><input class="inp" id="u-name" value="' + esc(u.name) + '" placeholder="' + L('hal. Aling Nena', 'e.g. Aling Nena') + '"></div>' +
+    '<div class="field"><label>' + L('Magkano?', 'How much?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="u-amt" inputmode="decimal" placeholder="0.00" value="' + (u.amount || '') + '"></div></div>' +
+    '<div class="field"><label>' + L('Kailan babayaran? (opsyonal)', 'Due date (optional)') + '</label><input class="inp" type="date" id="u-due" value="' + (u.due || '') + '"></div>' +
+    '<div class="field"><label>' + L('Tala (opsyonal)', 'Note (optional)') + '</label><input class="inp" id="u-note" value="' + esc(u.note || '') + '"></div>' +
+    '<button class="btn main" id="u-save">' + L('I-save', 'Save') + '</button>');
+  el.querySelector('[data-x]').onclick = () => closeSheet();
+  setTimeout(() => el.querySelector('#u-name').focus(), 300);
+  el.querySelector('#u-save').onclick = async () => {
+    const name = el.querySelector('#u-name').value.trim(), a = num(el.querySelector('#u-amt').value);
+    if (!name || !(a > 0)) { toast(L('Ilagay ang pangalan at halaga', 'Enter a name and amount'), 'think'); return; }
+    const rec = Object.assign({}, u, { name, amount: a, due: el.querySelector('#u-due').value, note: el.querySelector('#u-note').value.trim(), updatedAt: nowIso() });
+    if (!existing) { rec.createdAt = nowIso(); rec.by = myName(); rec.device = deviceId; rec.deleted = false; }
+    rec.status = (rec.paid || 0) >= rec.amount ? 'paid' : 'open';
+    closeSheet();
+    await queueOp({ op: 'upsert', table: 'utang', action: existing ? 'edit' : 'add', rec, summary: '🤝 ' + name + ' ' + money(a) });
+    render(); toast(praise(), 'cheer');
+  };
+}
+function openUtangDetail(u) {
+  if (!u) return;
+  const left = u.amount - (u.paid || 0);
+  const el = openSheet('<div class="sheet-head"><h2>' + esc(u.name) + '</h2><button class="x" data-x>×</button></div>' +
+    '<div class="grid"><div class="stat s-owed" style="min-height:80px"><div class="lbl">' + L('Natitira', 'Balance') + '</div><div class="amt">' + money(left) + '</div></div><div class="stat s-in" style="min-height:80px"><div class="lbl">' + L('Nabayaran', 'Paid') + '</div><div class="amt">' + money(u.paid || 0) + '</div></div></div>' +
+    (u.status !== 'paid' ? '<div class="field" style="margin-top:14px"><label>' + L('Magkano ang binayad?', 'How much was paid?') + '</label><div class="amtwrap" style="margin:0"><span>' + sym() + '</span><input id="p-amt" inputmode="decimal" value="' + left + '"></div></div>' +
+      '<button class="btn main" id="p-save">💸 ' + (u.kind === 'owed' ? L('Nagbayad sila', 'They paid') : L('Nagbayad ako', 'I paid')) + '</button>' : '<div class="card b" style="margin-top:12px;background:var(--green)">✓ ' + L('Bayad na lahat!', 'Fully paid!') + '</div>') +
+    '<h3>' + L('Mga bayad', 'Payments') + '</h3><div class="card" style="padding:6px 14px">' + ((u.payments || []).length ? u.payments.map(p => '<div class="set"><div>' + prettyDate(p.d) + '<div class="muted">✍️ ' + esc(p.by || '') + '</div></div><div class="val in">' + money(p.amt) + '</div></div>').join('') : '<div class="muted b small" style="padding:10px 0">' + L('Wala pa', 'None yet') + '</div>') + '</div>' +
+    '<div class="row2" style="margin-top:12px"><button class="btn soft" id="u-edit">✏️ ' + L('I-edit', 'Edit') + '</button><button class="btn danger" id="u-del">🗑️ ' + L('Burahin', 'Delete') + '</button></div>');
+  el.querySelector('[data-x]').onclick = () => closeSheet();
+  el.querySelector('#u-edit').onclick = () => { closeSheet(true); openUtangForm(u); };
+  el.querySelector('#u-del').onclick = async () => {
+    if (!confirm(L('Burahin ang utang na ito?', 'Delete this credit record?'))) return;
+    closeSheet();
+    await queueOp({ op: 'upsert', table: 'utang', action: 'delete', rec: Object.assign({}, u, { deleted: true, updatedAt: nowIso() }), summary: '🤝 ' + u.name + ' ' + money(u.amount) });
+    render();
+  };
+  const ps = el.querySelector('#p-save');
+  if (ps) ps.onclick = async () => {
+    const a = Math.min(num(el.querySelector('#p-amt').value), left);
+    if (!(a > 0)) return;
+    const paid = (u.paid || 0) + a;
+    const rec = Object.assign({}, u, { paid, status: paid >= u.amount ? 'paid' : 'open', payments: (u.payments || []).concat([{ d: today(), amt: a, by: myName() }]), updatedAt: nowIso() });
+    closeSheet();
+    await queueOp({ op: 'upsert', table: 'utang', action: 'pay', rec, summary: '💸 ' + u.name + ' ' + money(a) });
+    // record the cash movement automatically
+    const isIn = u.kind === 'owed';
+    const cat = isIn ? 'utang_in' : 'utang_out';
+    const entry = { id: uid('e'), type: isIn ? 'in' : 'out', amount: a, cat, catLabel: catName(CAT_LIB[cat]), method: (S.settings.methods || ['cash'])[0], date: today(), note: u.name, createdAt: nowIso(), updatedAt: nowIso(), by: myName(), device: deviceId, deleted: false };
+    await queueOp({ op: 'upsert', table: 'entries', action: 'add', rec: entry, summary: (isIn ? '+' : '−') + money(a) + ' · ' + entry.catLabel + ' · ' + u.name });
+    render(); toast(rec.status === 'paid' ? L('Bayad na lahat! 🎉', 'Fully paid! 🎉') : praise(), 'cheer');
+  };
+}
+
+/* ---------- export ---------- */
+function exportCsv() {
+  const isYear = S.repMode === 'year';
+  const y = S.repMonth.slice(0, 4);
+  const from = isYear ? y + '-01-01' : S.repMonth + '-01', to = isYear ? y + '-12-31' : S.repMonth + '-31';
+  const rows = [[L('Petsa', 'Date'), L('Uri', 'Type'), L('Kategorya', 'Category'), L('Halaga', 'Amount') + ' (' + cur() + ')', L('Paraan', 'Method'), L('Tala', 'Note'), L('Inilista ni', 'Recorded by')]];
+  live(S.entries).filter(e => e.date >= from && e.date <= to).sort((a, b) => a.date.localeCompare(b.date))
+    .forEach(e => rows.push([e.date, e.type === 'in' ? L('Kita', 'Money In') : L('Gastos', 'Expense'), catName(catOf(e.cat)), (e.type === 'in' ? '' : '-') + (+e.amount).toFixed(2), (METHODS[e.method] || ['', e.method])[1], e.note || '', e.by || '']));
+  const T = totals(from, to);
+  rows.push([], ['', '', L('Kabuuang Kita', 'Total In'), T.inn.toFixed(2)], ['', '', L('Kabuuang Gastos', 'Total Out'), (-T.out).toFixed(2)], ['', '', L('Tubo', 'Profit'), T.profit.toFixed(2)]);
+  const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'Kwentoink-' + (S.settings.businessName || 'report').replace(/[^\w-]+/g, '_') + '-' + (isYear ? y : S.repMonth) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast(L('Na-download na! Buksan sa Excel', 'Downloaded! Open it in Excel'), 'cheer');
+}
+
+/* =================================================================
+   FIRST-TIME FLOW: install guide → setup → name → tour
+   ================================================================= */
+function screen(html) {
+  const el = document.createElement('div'); el.className = 'screen'; el.innerHTML = '<div class="inner">' + html + '</div>';
+  document.body.appendChild(el); return el;
+}
+function carryParams() {
+  // iPhone keeps Safari and the Home Screen app separate — remember progress in the link
+  if (isStandalone()) return;
+  const p = new URLSearchParams(); p.set('id', CODE);
+  if (myName()) p.set('n', myName());
+  if (LS.get(K('tour'), false)) p.set('t', '1');
+  if (isOwnerDevice()) p.set('o', '1');
+  if (LS.get(K('lang'), null)) p.set('l', LANG);
+  try { history.replaceState(null, '', location.pathname + '?' + p.toString()); } catch (e) { }
+}
+function readCarried() {
+  if (!isStandalone()) return;
+  if (qs.get('n') && !LS.get(K('name'), '')) LS.set(K('name'), qs.get('n'));
+  if (qs.get('t') === '1') LS.set(K('tour'), true);
+  if (qs.get('o') === '1') LS.set(K('owner'), true);
+  if (qs.get('l') && !LS.get(K('lang'), null)) { LS.set(K('lang'), qs.get('l')); LANG = qs.get('l'); }
+  if (LS.get(K('name'), '')) LS.set(K('inst'), true);
+}
+
+/* ---------- install guide (blocks the app until done or "later") ---------- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+window.addEventListener('appinstalled', () => { LS.set(K('inst'), true); toast(L('Yehey, naka-install na! 🎉', 'Yay, installed! 🎉'), 'cheer'); });
+const SHARE_ICON = '<svg width="16" height="18" viewBox="0 0 16 20" style="vertical-align:-3px"><path d="M8 1v12M4 5l4-4 4 4" stroke="#2c6fd6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8H2v11h12V8h-3" stroke="#2c6fd6" stroke-width="2" fill="none" stroke-linejoin="round"/></svg>';
+function needInstallGuide() {
+  if (isStandalone() || LS.get(K('inst'), false) || LS.get(K('instLater'), 0) > Date.now()) return false;
+  return IS_IOS || IS_ANDROID;
+}
+function installGuide(manual) {
+  return new Promise(resolve => {
+    let steps, arrow = '', title;
+    const cleanLink = location.origin + location.pathname + '?id=' + CODE;
+    if (IN_APP) {
+      title = L('Buksan muna sa ' + (IS_IOS ? 'Safari' : 'Chrome'), 'First, open in ' + (IS_IOS ? 'Safari' : 'Chrome'));
+      arrow = 'tr';
+      steps = [
+        L('Pindutin ang <span class="kbd">•••</span> sa itaas (kanan).', 'Tap <span class="kbd">•••</span> at the top right.'),
+        L('Piliin ang <span class="kbd">Open in ' + (IS_IOS ? 'Safari' : 'Chrome') + '</span> o <span class="kbd">Open in browser</span>.', 'Choose <span class="kbd">Open in ' + (IS_IOS ? 'Safari' : 'Chrome') + '</span> or <span class="kbd">Open in browser</span>.'),
+        L('O kaya, kopyahin ang link at i-paste sa ' + (IS_IOS ? 'Safari' : 'Chrome') + ':', 'Or copy the link and paste it into ' + (IS_IOS ? 'Safari' : 'Chrome') + ':') + '<button class="btn soft" style="margin-top:8px;padding:10px" id="copyLink">📋 ' + L('Kopyahin ang link', 'Copy link') + '</button>'
+      ];
+    } else if (IS_IOS && IS_CRIOS) {
+      title = L('I-add sa Home Screen', 'Add to Home Screen'); arrow = 'tr';
+      steps = [
+        L('Pindutin ang Share ' + SHARE_ICON + ' sa itaas (kanan), sa tabi ng address bar.', 'Tap Share ' + SHARE_ICON + ' at the top right, next to the address bar.'),
+        L('Mag-scroll pababa at pindutin ang <span class="kbd">Add to Home Screen</span>.', 'Scroll down and tap <span class="kbd">Add to Home Screen</span>.'),
+        L('Pindutin ang <span class="kbd">Add</span>. Tapos!', 'Tap <span class="kbd">Add</span>. Done!')
+      ];
+    } else if (IS_IOS) {
+      title = L('I-add sa Home Screen', 'Add to Home Screen');
+      const newSafari = SAFARI_VER >= 26;
+      arrow = newSafari ? 'br' : 'bc';
+      steps = newSafari ? [
+        L('Pindutin ang <span class="kbd">•••</span> sa baba (kanan) — o ang Share ' + SHARE_ICON + ' kung nakikita mo.', 'Tap <span class="kbd">•••</span> at the bottom right — or Share ' + SHARE_ICON + ' if you see it.'),
+        L('Pindutin ang <span class="kbd">Share</span> ' + SHARE_ICON + ', tapos mag-scroll pababa.', 'Tap <span class="kbd">Share</span> ' + SHARE_ICON + ', then scroll down.'),
+        L('Pindutin ang <span class="kbd">Add to Home Screen</span>.', 'Tap <span class="kbd">Add to Home Screen</span>.'),
+        L('Siguraduhing naka-ON ang <span class="kbd">Open as Web App</span>, tapos <span class="kbd">Add</span>.', 'Make sure <span class="kbd">Open as Web App</span> is ON, then tap <span class="kbd">Add</span>.')
+      ] : [
+        L('Pindutin ang Share ' + SHARE_ICON + ' sa baba (gitna).', 'Tap Share ' + SHARE_ICON + ' at the bottom (middle).'),
+        L('Mag-scroll pababa at pindutin ang <span class="kbd">Add to Home Screen</span>.', 'Scroll down and tap <span class="kbd">Add to Home Screen</span>.'),
+        L('Pindutin ang <span class="kbd">Add</span> sa itaas (kanan). Tapos!', 'Tap <span class="kbd">Add</span> at the top right. Done!')
+      ];
+    } else {
+      title = L('I-install ang Kwentoink', 'Install Kwentoink'); arrow = deferredPrompt ? '' : 'tr';
+      steps = deferredPrompt ? [L('Pindutin ang malaking button sa baba. Isang tap lang!', 'Tap the big button below. Just one tap!')] : [
+        L('Pindutin ang <span class="kbd">⋮</span> sa itaas (kanan).', 'Tap <span class="kbd">⋮</span> at the top right.'),
+        L('Pindutin ang <span class="kbd">Add to Home screen</span> o <span class="kbd">Install app</span>.', 'Tap <span class="kbd">Add to Home screen</span> or <span class="kbd">Install app</span>.'),
+        L('Pindutin ang <span class="kbd">Install</span>. Tapos!', 'Tap <span class="kbd">Install</span>. Done!')
+      ];
+    }
+    const el = screen(
+      '<div style="text-align:center"><div class="wz-m" style="width:120px">' + mascot('wave') + '</div></div>' +
+      '<div class="wz-q">' + title + '<small>' + (IN_APP ? L('Hindi gagana nang maayos ang Kwentoink sa loob ng Messenger/Facebook.', "Kwentoink won't work well inside Messenger/Facebook.") : L('Para bumukas ito na parang app, mabilis, at gumagana kahit walang internet!', 'So it opens like an app, loads fast, and works even offline!')) + '</small></div>' +
+      steps.map((s, i) => '<div class="inst-step"><div class="n">' + (i + 1) + '</div><div>' + s + '</div></div>').join('') +
+      '<div class="wz-foot" style="flex-direction:column">' +
+      (deferredPrompt && !IN_APP ? '<button class="btn pink" id="i-install">📲 ' + L('I-install ngayon', 'Install now') + '</button>' : '') +
+      (!IN_APP ? '<button class="btn main" id="i-done">✅ ' + L('Na-add ko na!', 'I added it!') + '</button>' : '') +
+      '<button class="btn soft" id="i-later">' + L('Mamaya na', 'Maybe later') + '</button></div>'
+    );
+    let ptr = null;
+    if (arrow) { ptr = document.createElement('div'); ptr.className = 'pointer ' + arrow; ptr.textContent = arrow === 'tr' ? '👆' : '👇'; document.body.appendChild(ptr); }
+    const finish = () => { el.remove(); ptr && ptr.remove(); resolve(); };
+    const cp = el.querySelector('#copyLink');
+    if (cp) cp.onclick = async () => { try { await navigator.clipboard.writeText(cleanLink); cp.textContent = '✓ ' + L('Nakopya!', 'Copied!'); } catch (e) { prompt('Copy:', cleanLink); } };
+    const ib = el.querySelector('#i-install');
+    if (ib) ib.onclick = async () => { deferredPrompt.prompt(); const c = await deferredPrompt.userChoice; deferredPrompt = null; if (c.outcome === 'accepted') { LS.set(K('inst'), true); finish(); } };
+    const d = el.querySelector('#i-done');
+    if (d) d.onclick = () => {
+      LS.set(K('inst'), true);
+      if (IS_IOS) {
+        el.querySelector('.inner').innerHTML = '<div style="text-align:center"><div class="wz-m">' + mascot('cheer') + '</div></div><div class="wz-q">' + L('Yehey! 🎉', 'Yay! 🎉') + '<small>' + L('Isara na ang Safari at buksan ang <b>Kwentoink</b> sa Home Screen mo. Nandoon na ang carabao! 🐃', 'Close Safari and open <b>Kwentoink</b> from your Home Screen. Look for the carabao! 🐃') + '</small></div>' +
+          '<div class="wz-foot" style="flex-direction:column"><button class="btn soft" id="i-cont">' + L('Ituloy dito sa Safari', 'Continue here in Safari') + '</button></div>';
+        ptr && ptr.remove();
+        el.querySelector('#i-cont').onclick = finish;
+      } else finish();
+    };
+    el.querySelector('#i-later').onclick = () => { if (!manual) LS.set(K('instLater'), Date.now() + 3 * 86400000); finish(); };
+  });
+}
+
+/* ---------- setup wizard (like Petsa: one question at a time) ---------- */
+function setupWizard() {
+  return new Promise(resolve => {
+    const A = { lang: LANG, businessName: '', ownerName: '', type: '', currency: 'PHP', methods: ['cash'], startCash: '', utangOn: true, bills: [] };
+    const el = screen('');
+    let i = 0;
+    const steps = [
+      { q: () => 'Kumusta! 👋 Ako si Kwento.<small>Hello! I\'m Kwento, your bookkeeping buddy. Pumili ng wika / Choose a language:</small>', m: 'wave',
+        body: () => opt('lang', [['tl', '🇵🇭', 'Tagalog', 'Simpleng Tagalog'], ['en', '🇬🇧', 'English', 'Simple English']]), auto: true },
+      { q: () => L('Ano ang pangalan ng negosyo mo?', "What's your business name?") + '<small>' + L('hal. Maria\'s Sari-Sari Store', "e.g. Maria's Sari-Sari Store") + '</small>', m: 'happy',
+        body: () => '<input class="wz-input" id="wv" value="' + esc(A.businessName) + '" placeholder="' + L('Pangalan ng negosyo', 'Business name') + '">', get: v => (A.businessName = v.trim()) || null },
+      { q: () => L('Ano ang pangalan mo, Bossing?', "What's your name, Boss?") + '<small>' + L('Para alam namin kung sino ang naglista.', 'So we know who recorded what.') + '</small>', m: 'happy',
+        body: () => '<input class="wz-input" id="wv" value="' + esc(A.ownerName) + '" placeholder="' + L('Pangalan mo', 'Your name') + '">', get: v => (A.ownerName = v.trim()) || null },
+      { q: () => L('Anong klase ang negosyo mo?', 'What kind of business is it?') + '<small>' + L('Aayusin namin ang mga kategorya para sa iyo.', "We'll set up categories that fit.") + '</small>', m: 'think',
+        body: () => opt('type', BIZ_TYPES.map(b => [b.k, b.e, b[LANG], ''])), auto: true },
+      { q: () => L('Anong pera ang gamit mo?', 'Which currency do you use?'), m: 'happy',
+        body: () => opt('currency', Object.keys(CURRENCIES).map(k => [k, CURRENCIES[k].f, CURRENCIES[k][LANG] + ' (' + CURRENCIES[k].sym + ')', k])), auto: true },
+      { q: () => L('Paano ka binabayaran ng customers?', 'How do customers pay you?') + '<small>' + L('Pwedeng pumili ng marami.', 'You can pick more than one.') + '</small>', m: 'happy',
+        body: () => opt('methods', Object.keys(METHODS).filter(k => k !== 'paypal' || A.currency !== 'PHP').map(k => [k, METHODS[k][0], METHODS[k][1], '']), true), get: () => A.methods.length ? 1 : null },
+      { q: () => L('Magkano ang pera mo sa negosyo ngayon?', 'How much cash does the business have today?') + '<small>' + L('Tantiya lang. Pwedeng 0. Pwedeng baguhin mamaya.', 'An estimate is fine. Can be 0. You can change it later.') + '</small>', m: 'think',
+        body: () => '<div class="amtwrap"><span>' + CURRENCIES[A.currency].sym + '</span><input id="wv" inputmode="decimal" placeholder="0.00" value="' + esc(A.startCash) + '"></div>', get: v => { A.startCash = num(v); return 1; } },
+      { q: () => L('May mga customer bang umuutang?', 'Do customers buy on credit (utang)?') + '<small>' + L('O may utang ka sa supplier?', 'Or do you owe suppliers?') + '</small>', m: 'think',
+        body: () => opt('utangOn', [[true, '🤝', L('Oo, meron', 'Yes'), L('Ilista natin ang utang', "Let's track credit")], [false, '🙅', L('Wala', 'No'), L('Cash lang lahat', 'Everything is paid right away')]]), auto: true },
+      { q: () => L('May regular ka bang bayarin?', 'Any regular bills?') + '<small>' + L('Pumili ng lahat ng meron ka. Pwedeng laktawan.', 'Pick all that apply. You can skip.') + '</small>', m: 'happy',
+        body: () => opt('bills', BILLS.map(k => [k, CAT_LIB[k].i, CAT_LIB[k][LANG], '']), true), get: () => 1 },
+      { q: () => L('Ayos! Handa na ang Kwentoink mo! 🎉', 'All set! Your Kwentoink is ready! 🎉') + '<small>' + esc(A.businessName) + ' · ' + CURRENCIES[A.currency].f + ' ' + CURRENCIES[A.currency].sym + '</small>', m: 'cheer',
+        body: () => '<div class="card b" style="text-align:center;line-height:1.5">' + L('Kapag may benta, pindutin ang <b>+</b> at ilista. Kapag may gastos, ganun din. Ako na ang bahala sa pagkuwenta! 🐃✍️', "When you make a sale, tap <b>+</b> and record it. Same for expenses. I'll do the math! 🐃✍️") + '</div>', final: true }
+    ];
+    function opt(key, list, multi) {
+      return '<div class="opts">' + list.map(o => {
+        const sel = multi ? A[key].includes(o[0]) : A[key] === o[0];
+        return '<button class="opt ' + (sel ? 'sel' : '') + '" data-k="' + key + '" data-v=\'' + JSON.stringify(o[0]) + '\'' + (multi ? ' data-multi="1"' : '') + '><span class="e">' + o[1] + '</span><span>' + esc(o[2]) + (o[3] ? '<small>' + esc(o[3]) + '</small>' : '') + '</span></button>';
+      }).join('') + '</div>';
+    }
+    function paint() {
+      const s = steps[i];
+      el.querySelector('.inner').innerHTML =
+        '<div class="wz-top"><button class="iconbtn ' + (i ? '' : 'hidden') + '" id="wb">←</button><div class="dots">' + steps.map((_, j) => '<i class="' + (j === i ? 'on' : '') + '"></i>').join('') + '</div><div style="width:42px"></div></div>' +
+        '<div class="wz-m">' + mascot(s.m, 'hop') + '</div><div class="wz-q">' + s.q() + '</div>' + s.body() +
+        '<div class="wz-foot">' + (s.auto ? '' : '<button class="btn ' + (s.final ? 'pink' : 'main') + '" id="wn">' + (s.final ? L('Simulan na! 🚀', "Let's go! 🚀") : L('Sunod →', 'Next →')) + '</button>') + '</div>';
+      const inp = el.querySelector('#wv');
+      if (inp) { setTimeout(() => inp.focus(), 250); inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') next(); }); }
+      el.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+        const k = b.dataset.k, v = JSON.parse(b.dataset.v);
+        if (b.dataset.multi) { const a = A[k]; const j = a.indexOf(v); if (j >= 0) a.splice(j, 1); else a.push(v); b.classList.toggle('sel'); return; }
+        A[k] = v;
+        if (k === 'lang') { LANG = v; LS.set(K('lang'), v); }
+        el.querySelectorAll('.opt').forEach(x => x.classList.remove('sel')); b.classList.add('sel');
+        setTimeout(next, 220);
+      });
+      const wb = el.querySelector('#wb'); if (wb) wb.onclick = () => { i--; paint(); };
+      const wn = el.querySelector('#wn'); if (wn) wn.onclick = next;
+    }
+    async function next() {
+      const s = steps[i];
+      if (s.get) {
+        const inp = el.querySelector('#wv');
+        if (!s.get(inp ? inp.value : '')) { const t = el.querySelector('.wz-input,.amtwrap,.opts'); if (t) { t.style.outline = '3px solid var(--pink)'; t.style.borderRadius = '20px'; } return; }
+      }
+      if (!s.final) { i++; paint(); return; }
+      // save
+      const cats = TYPE_CATS[A.type || 'other'].map(k => CAT_LIB[k]);
+      A.bills.forEach(k => { if (!cats.find(c => c.k === k)) cats.splice(cats.length - 1, 0, CAT_LIB[k]); });
+      cats.push(CAT_LIB.utang_in, CAT_LIB.utang_out);
+      const settings = { lang: A.lang, businessName: A.businessName, ownerName: A.ownerName, bizType: A.type, currency: A.currency, methods: A.methods, startCash: num(A.startCash), utangOn: A.utangOn, categories: cats };
+      const btn = el.querySelector('#wn'); btn.disabled = true; btn.textContent = L('Sine-save…', 'Saving…');
+      try {
+        const j = await api('setup', { settings, by: A.ownerName });
+        applyServer(j); await saveCache();
+        LS.set(K('name'), A.ownerName); LS.set(K('owner'), true);
+        el.remove(); resolve();
+      } catch (e) {
+        btn.disabled = false; btn.textContent = L('Subukan ulit', 'Try again');
+        toast(L('Kailangan ng internet para i-save. Subukan ulit.', 'Need internet to save. Please try again.'), 'sad');
+      }
+    }
+    paint();
+  });
+}
+
+/* ---------- "Who are you?" (once per phone) ---------- */
+function askName(change) {
+  return new Promise(resolve => {
+    const el = screen(
+      '<div class="wz-m">' + mascot('wave', 'hop') + '</div><div class="wz-q">' + L('Hello! Sino ka? 👋', 'Hi! Who are you? 👋') +
+      '<small>' + L('Para makita ng lahat kung sino ang naglista o nag-edit.', 'So everyone can see who recorded or changed things.') + '</small></div>' +
+      '<input class="wz-input" id="nm" value="' + esc(change ? myName() : '') + '" placeholder="' + L('Pangalan mo (hal. Joy)', 'Your name (e.g. Joy)') + '">' +
+      '<div class="chips" style="justify-content:center;margin-top:12px">' + ['Owner', 'Staff', 'Cashier'].map(x => '<button class="chip" data-n="' + x + '">' + x + '</button>').join('') + '</div>' +
+      '<div class="wz-foot"><button class="btn main" id="nm-ok">' + L('Sige, tuloy! →', 'Continue →') + '</button></div>');
+    const i = el.querySelector('#nm'); setTimeout(() => i.focus(), 250);
+    el.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { i.value = i.value ? i.value.replace(/ \((Owner|Staff|Cashier)\)$/, '') + ' (' + b.dataset.n + ')' : b.dataset.n; i.focus(); });
+    const ok = () => { const v = i.value.trim(); if (!v) { i.style.borderColor = 'var(--pink)'; return; } LS.set(K('name'), v); carryParams(); el.remove(); resolve(); };
+    el.querySelector('#nm-ok').onclick = ok;
+    i.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+  });
+}
+
+/* ---------- guided tour: only the highlighted button can be tapped ---------- */
+let tourActive = false;
+function tourSteps(kind) {
+  const full = [
+    { sel: '#c-in', tl: 'Dito makikita ang <b>Kita</b> — perang pumasok mula sa benta.', en: 'This shows your <b>Money In</b> — cash from sales.' },
+    { sel: '#c-out', tl: 'Ito ang <b>Gastos</b> — perang lumabas (paninda, pamasahe, bills).', en: 'These are your <b>Expenses</b> — money going out (stock, transport, bills).' },
+    { sel: '#c-profit', tl: 'Ito ang <b>Tubo</b>. Kita bawas Gastos. Ako na ang nagkukuwenta! 🐃', en: 'This is your <b>Profit</b>: Money In minus Expenses. I do the math! 🐃' },
+    { sel: '#cash-box', tl: 'Tantiya ng perang hawak mo ngayon.', en: 'An estimate of the cash you have right now.' },
+    { sel: '#fab', action: 1, tl: 'Subukan natin! Pindutin ang <b>+</b> para maglista.', en: "Let's try it! Tap <b>+</b> to record something." },
+    { sel: '#sh-type', tl: 'Piliin muna: <b>Kita</b> kung may pumasok na pera, <b>Gastos</b> kung may lumabas.', en: 'First choose: <b>Money In</b> for cash received, <b>Expense</b> for cash spent.' },
+    { sel: '#sh-amt', tl: 'I-type dito ang halaga.', en: 'Type the amount here.' },
+    { sel: '#sh-cats', tl: 'Piliin kung para saan ito.', en: 'Pick what it was for.' },
+    { sel: '#sh-rcpt', tl: 'Pwede kang magkuha ng picture ng resibo. Kahit malaki ang photo, ok lang!', en: 'You can snap the receipt. Big photos are fine!' },
+    { sel: '#sh-close', action: 1, tl: 'Ayan! Pindutin ang <b>×</b> para isara muna.', en: 'Great! Tap <b>×</b> to close it for now.' },
+    { sel: '#nav-list', tl: 'Sa <b>Listahan</b> makikita lahat ng nailista, at kung sino ang naglista.', en: '<b>Records</b> shows everything recorded, and who recorded it.' },
+    { sel: '#nav-utang', tl: 'Sa <b>Utang</b> ililista kung sino ang may utang sa iyo, at utang mo.', en: '<b>Credit</b> tracks who owes you, and who you owe.', skipIf: () => !S.settings.utangOn },
+    { sel: '#nav-report', tl: 'Sa <b>Ulat</b> makikita ang buwanang kita, at pwedeng i-download sa Excel o PDF.', en: '<b>Reports</b> shows your monthly results, with Excel or PDF download.' },
+    { sel: '#syncBadge', tl: 'Kahit walang internet, naka-save sa phone. Kusa itong magsi-sync mamaya.', en: 'No internet? It saves on the phone and syncs by itself later.' },
+    { sel: '#btn-settings', tl: 'Sa Settings: palitan ang wika, currency, o <b>ulitin ang tutorial</b>.', en: 'Settings: change language, currency, or <b>replay this tutorial</b>.' }
+  ];
+  if (kind === 'full') return full;
+  return full.filter(s => ['#fab', '#sh-type', '#sh-rcpt', '#sh-close', '#nav-list'].includes(s.sel)).map(s => s.sel === '#fab' ? Object.assign({}, s, { tl: 'Ganito maglista: pindutin ang <b>+</b>.', en: 'Here\'s how to record: tap <b>+</b>.' }) : s);
+}
+function runTour(kind) {
+  return new Promise(resolve => {
+    const steps = tourSteps(kind).filter(s => !(s.skipIf && s.skipIf()));
+    let i = 0, target = null, actionHandler = null;
+    tourActive = true;
+    const blks = [0, 1, 2, 3, 4].map(() => { const b = document.createElement('div'); b.className = 'blk'; document.body.appendChild(b); return b; });
+    const ring = document.createElement('div'); ring.className = 'ring';
+    const coach = document.createElement('div'); coach.className = 'coach';
+    const arrow = document.createElement('div'); arrow.className = 'tap-arrow'; arrow.textContent = '👇';
+    document.body.append(ring, coach, arrow);
+    const blockTap = ev => { ev.preventDefault(); ev.stopPropagation(); };
+    blks.forEach(b => { b.addEventListener('click', blockTap, true); b.addEventListener('touchstart', blockTap, { passive: false }); });
+    const end = () => {
+      tourActive = false;
+      blks.forEach(b => b.remove()); ring.remove(); coach.remove(); arrow.remove();
+      window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true);
+      if (target && actionHandler) target.removeEventListener('click', actionHandler, true);
+      closeSheet(true);
+      LS.set(K('tour'), true); carryParams();
+      toast(L('Handa ka na, Bossing! Good luck sa negosyo! 🎉', "You're all set! Good luck with the business! 🎉"), 'cheer');
+      resolve();
+    };
+    function place() {
+      if (!target) return;
+      const r = target.getBoundingClientRect(), p = 6;
+      const x = Math.max(0, r.left - p), y = Math.max(0, r.top - p), w = Math.min(innerWidth, r.width + p * 2), h = r.height + p * 2;
+      const vw = innerWidth, vh = innerHeight;
+      Object.assign(ring.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+      Object.assign(blks[0].style, { left: 0, top: 0, width: vw + 'px', height: y + 'px' });
+      Object.assign(blks[1].style, { left: 0, top: (y + h) + 'px', width: vw + 'px', height: Math.max(0, vh - y - h) + 'px' });
+      Object.assign(blks[2].style, { left: 0, top: y + 'px', width: x + 'px', height: h + 'px' });
+      Object.assign(blks[3].style, { left: (x + w) + 'px', top: y + 'px', width: Math.max(0, vw - x - w) + 'px', height: h + 'px' });
+      // 5th blocker covers the hole on "info" steps so nothing can be pressed except Next
+      const s = steps[i];
+      Object.assign(blks[4].style, s.action ? { width: 0, height: 0 } : { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+      const ch = coach.offsetHeight || 120;
+      const below = y + h + 16 + ch < vh - 10;
+      const above = y - ch - 16 > 10;
+      let top;
+      if (y + h / 2 > vh / 2 && above) top = y - ch - 50; else if (below) top = y + h + 50; else top = Math.max(10, y - ch - 50);
+      top = Math.max(10 + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safet')) || 0), Math.min(top, vh - ch - 10));
+      coach.style.top = top + 'px';
+      arrow.style.display = s.action ? 'block' : 'none';
+      const pointDown = top < y;
+      arrow.textContent = pointDown ? '👇' : '👆';
+      arrow.style.left = Math.min(vw - 50, Math.max(4, x + w / 2 - 20)) + 'px';
+      arrow.style.top = (pointDown ? y - 44 : y + h + 2) + 'px';
+    }
+    function show() {
+      if (target && actionHandler) { target.removeEventListener('click', actionHandler, true); actionHandler = null; }
+      if (i >= steps.length) return end();
+      const s = steps[i];
+      let tries = 0;
+      const find = () => {
+        target = document.querySelector(s.sel);
+        if (!target || target.offsetParent === null && getComputedStyle(target).position !== 'fixed') {
+          if (tries++ < 20) return setTimeout(find, 80);
+          i++; return show(); // element not on screen — skip
+        }
+        const r = target.getBoundingClientRect();
+        if (r.top < 70 || r.bottom > innerHeight - 90) { target.scrollIntoView({ block: 'center', behavior: 'instant' }); }
+        coach.innerHTML = '<div class="m">' + mascot(s.action ? 'wave' : 'happy') + '</div><div style="flex:1"><div class="stepn">' + (i + 1) + ' / ' + steps.length + '</div><div class="txt">' + s[LANG] + '</div><div class="act">' +
+          (s.action ? '<span class="small b muted">👆 ' + L('Pindutin ang nakailaw', 'Tap the highlighted button') + '</span>' : '<button class="go">' + (i === steps.length - 1 ? L('Tapos! 🎉', 'Done! 🎉') : L('Sige →', 'Next →')) + '</button>') +
+          '<button class="skip">' + L('Laktawan', 'Skip') + '</button></div></div>';
+        const go = coach.querySelector('.go'); if (go) go.onclick = () => { i++; show(); };
+        coach.querySelector('.skip').onclick = end;
+        if (s.action) {
+          actionHandler = () => { target.removeEventListener('click', actionHandler, true); actionHandler = null; setTimeout(() => { i++; show(); }, 380); };
+          target.addEventListener('click', actionHandler, true);
+        }
+        requestAnimationFrame(place); setTimeout(place, 300);
+      };
+      find();
+    }
+    window.addEventListener('resize', place); window.addEventListener('scroll', place, true);
+    show();
+  });
+}
+
+/* ---------- gates: wrong link / ended / need internet ---------- */
+let gateEl = null;
+function gate(mood, title, msg, btn) {
+  if (gateEl) gateEl.remove();
+  gateEl = screen('<div style="flex:1"></div><div class="wz-m">' + mascot(mood) + '</div><div class="wz-q">' + title + '<small>' + msg + '</small></div>' + (btn ? '<button class="btn main" id="g-btn">' + btn + '</button>' : '') + '<div style="flex:1"></div>');
+  gateEl.style.zIndex = 150;
+  const b = gateEl.querySelector('#g-btn'); if (b) b.onclick = () => location.reload();
+}
+function gateCheck() {
+  if (!S.sub) return false;
+  if (S.sub.state === 'invalid') { gate('sad', L('Hindi gumagana ang link na ito', "This link doesn't work"), L('Baka luma na ang link. Humingi ng bagong Kwentoink link sa owner ng negosyo.', 'It may be an old link. Ask the business owner for the new Kwentoink link.')); return true; }
+  if (S.sub.state === 'expired') { gate('sad', L('Naka-pause ang Kwentoink mo', 'Your Kwentoink is paused'), L('Tapos na ang trial o subscription. Ligtas ang lahat ng listahan mo! 💙<br><br>', 'Your trial or subscription has ended. All your records are safe! 💙<br><br>') + esc(S.support), L('Subukan ulit', 'Check again')); return true; }
+  if (gateEl) { gateEl.remove(); gateEl = null; }
+  return false;
+}
+
+/* =================================================================
+   BOOT
+   ================================================================= */
+async function boot() {
+  const hideSplash = () => { const sp = $('#splash'); if (sp) { sp.style.opacity = 0; setTimeout(() => sp.remove(), 300); } };
+  if (DEMO) $('#demoChip').classList.remove('hidden');
+  if (!CODE) { hideSplash(); gate('think', L('Kailangan ang link mo', 'You need your personal link'), L('Buksan ang Kwentoink gamit ang link na ibinigay sa iyo.', 'Open Kwentoink using the link you were given.')); return; }
+  readCarried();
+  const hadCache = await loadCache();
+  if (S.settings && !LS.get(K('lang'), null) && S.settings.lang) LANG = S.settings.lang;
+  document.documentElement.lang = LANG === 'tl' ? 'tl' : 'en';
+  if (hadCache && S.settings) { showApp(); hideSplash(); }
+
+  // talk to the server (in the background if we already showed cached data)
+  let fresh = false;
+  if (navigator.onLine || DEMO) {
+    try {
+      const j = S.ops.length ? await api('sync', { ops: S.ops }) : await api('init', {});
+      if (S.ops.length) { S.ops = []; DB.set(K('ops'), S.ops); }
+      applyServer(j); await saveCache(); fresh = true;
+    } catch (e) { console.warn(e); }
+  }
+  if (S.settings && !LS.get(K('lang'), null) && S.settings.lang) LANG = S.settings.lang;
+  hideSplash();
+  if (gateCheck()) return;
+  if (!S.settings && !fresh) {
+    gate('think', L('Kailangan ng internet', 'Internet needed'), L('Sa unang bukas, kailangan ng internet. Pagkatapos nito, gagana na kahit offline!', 'The very first time needs internet. After that it works offline too!'), L('Subukan ulit', 'Try again'));
+    return;
+  }
+  if (!fresh && S.lastOk && Date.now() - S.lastOk > S.grace * 86400000) {
+    gate('think', L('Kumonekta sa internet', 'Please connect to the internet'), L('Matagal ka nang offline. Kumonekta saglit para ma-sync at ma-check ang account mo.', "You've been offline a long time. Connect briefly to sync and check your account."), L('Subukan ulit', 'Try again'));
+    return;
+  }
+  // first-time on this phone
+  if (needInstallGuide()) await installGuide(false);
+  if (!S.settings) await setupWizard();
+  if (!myName()) await askName(false);
+  carryParams();
+  showApp();
+  if (!LS.get(K('tour'), false)) { go('home'); await new Promise(r => setTimeout(r, 400)); await runTour(isOwnerDevice() ? 'full' : 'short'); }
+  flush(); loadLog();
+}
+let appShown = false;
+function showApp() {
+  $('#app').classList.remove('hidden'); $('#nav').classList.remove('hidden');
+  if (!appShown) {
+    appShown = true;
+    $$('.nav button[data-v]').forEach(b => b.onclick = () => go(b.dataset.v));
+    $('#fab').onclick = () => openEntry();
+    $('#btn-settings').onclick = () => go('settings');
+    $('#syncBadge').onclick = () => { flush(true); };
+  }
+  go(S.view || 'home');
+}
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => { });
+}
+boot();
+</script>
+</body>
+</html>
