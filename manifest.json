@@ -2,13 +2,15 @@
   "name": "Kwentoink",
   "short_name": "Kwentoink",
   "description": "Tell your business story, simply.",
+  "start_url": "./",
+  "id": "./",
   "display": "standalone",
   "scope": "./",
   "background_color": "#cfe8fb",
   "theme_color": "#cfe8fb",
   "orientation": "portrait",
   "icons": [
-    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "logo.png", "sizes": "192x192 512x512", "type": "image/png", "purpose": "any" },
     { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
