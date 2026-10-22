@@ -333,7 +333,7 @@ details summary:after{content:" ▾";color:var(--muted)} details[open] summary:a
 const API_URL = 'https://script.google.com/macros/s/AKfycbwtNzMjBvyWxUDpFdPjF69wUlKkVW099st_29zvTVqeCJckM-FOLuUTgRXqCq99wxnE/exec';
 // =========================================================
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const qs = new URLSearchParams(location.search);
 // Remember the link code on this phone, so the installed app (Android) opens the right business
 const CODE = (() => {
@@ -437,6 +437,7 @@ const CAT_LIB = {
   tax: C('tax', 'out', '🏛️', 'Buwis', 'Taxes'),
   permit: C('permit', 'out', '📄', 'Permit', 'Permit'),
   other_out: C('other_out', 'out', '🧾', 'Iba pa', 'Other'),
+  pos: C('pos', 'in', '🐱', 'Benta (Puscart)', 'Sales (Puscart)', { sys: 1 }),
   utang_in: C('utang_in', 'in', '🤝', 'Bayad sa utang', 'Credit collected', { sys: 1 }),
   utang_out: C('utang_out', 'out', '🤝', 'Bayad ng utang ko', 'Debt paid', { sys: 1 }),
   owner_in: C('owner_in', 'in', '👛', 'Dagdag puhunan (sariling pera)', 'Added capital (own money)', { eq: 1 }),
@@ -516,6 +517,7 @@ const STAFF_MODES = {
 };
 // why a record is locked for this phone ('' = can edit)
 function lockReason(rec) {
+  if (rec && String(rec.id || '').indexOf('pos') === 0) return L('🐱 Galing ito sa Puscart (kabuuang benta ng araw). Para baguhin, i-void o ayusin ang benta sa Puscart — kusa itong mag-a-update dito.', '🐱 This comes from Puscart (the day\'s sales total). To change it, void or fix the sale in Puscart — it updates here by itself.');
   if (!rec || isOwner()) return '';
   const m = staffMode();
   if (m === 'never') return L('🔒 Owner lang ang pwedeng mag-edit o magbura. Kung may mali, sabihan si Owner.', '🔒 Only the owner can edit or delete. Tell the owner if something is wrong.');
@@ -972,8 +974,27 @@ function pctChange(now, before) {
   const p = Math.round((now - before) / Math.abs(before) * 100);
   return '<span class="small b" style="color:' + (p >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + (p >= 0 ? '▲ ' : '▼ ') + Math.abs(p) + '%</span>';
 }
+const addDays_ = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+const WD = () => LANG === 'tl' ? ['Lun', 'Mar', 'Miy', 'Huw', 'Biy', 'Sab', 'Lin'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WD_FULL = () => LANG === 'tl' ? ['Lunes', 'Martes', 'Miyerkules', 'Huwebes', 'Biyernes', 'Sabado', 'Linggo'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// compare a period that is still going on with the SAME number of days of the period before
 function reportRange() {
+  const R = reportRangeBase(), t = today();
+  if (R.from <= t && R.to > t) {
+    const days = Math.round((parseYmd(t) - parseYmd(R.from)) / 864e5);
+    const cut = addDays_(R.pFrom, days);
+    if (cut < R.pTo) { R.pTo = cut; R.partial = true; R.prevTitle = R.prevTitle + ' (' + L('unang ' + (days + 1) + ' araw', 'first ' + (days + 1) + ' days') + ')'; }
+  }
+  return R;
+}
+function reportRangeBase() {
   if (!S.repMonth) S.repMonth = today().slice(0, 7);
+  if (S.repMode === 'week') {
+    if (!S.repWeek) { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); S.repWeek = ymd(d); }
+    const from = S.repWeek, to = addDays_(from, 6), f = parseYmd(from), t2 = parseYmd(to);
+    const title = MONTHS[LANG][f.getMonth()] + ' ' + f.getDate() + '–' + (t2.getMonth() !== f.getMonth() ? MONTHS[LANG][t2.getMonth()] + ' ' : '') + t2.getDate() + ', ' + t2.getFullYear();
+    return { isWeek: true, isYear: false, y: t2.getFullYear(), m: t2.getMonth() + 1, lastDay: 7, from, to, pFrom: addDays_(from, -7), pTo: addDays_(from, -1), title, prevTitle: L('nakaraang linggo', 'last week') };
+  }
   const isYear = S.repMode === 'year';
   const y = +S.repMonth.slice(0, 4), m = +S.repMonth.slice(5, 7);
   const lastDay = new Date(y, m, 0).getDate();
@@ -1005,6 +1026,76 @@ function reportData() {
     noReceipt: ents.filter(e => e.type === 'out' && !e.receiptId && !e.receiptLocal).length
   };
 }
+/* ---------- Kwento's analysis: why profit went up/down + tips (rule-based, no AI) ---------- */
+function catTotalsRange(from, to) {
+  const g = { in: {}, out: {} };
+  live(S.entries).forEach(e => { if (e.date >= from && e.date <= to && !isEq(e.cat)) { const t = e.type === 'in' ? 'in' : 'out'; g[t][e.cat] = (g[t][e.cat] || 0) + (+e.amount || 0); } });
+  return g;
+}
+function insightCard(D) {
+  const R = D.R, T = D.T, P = D.P, cn = k => { const c = catOf(k); return c.i + ' ' + catName(c); };
+  const why = [], tips = [];
+  const margin = T.inn ? Math.round(T.profit / T.inn * 100) : 0;
+  let head, sub = '', mood;
+  if (!T.n) { mood = 'think'; head = L('Wala pang nailista sa ' + R.title + '.', 'Nothing recorded for ' + R.title + ' yet.'); sub = L('Maglista ng kita at gastos para makita ko kung kumikita ka.', "Record money in and expenses so I can tell if you're earning."); }
+  else if (T.profit > 0) { mood = 'cheer'; head = L('Kumita ka ng ' + money(T.profit) + '! 🎉', 'You earned ' + money(T.profit) + '! 🎉'); sub = L('Sa bawat ₱100 na pumasok, ₱' + margin + ' ang natira sa iyo.', 'For every ₱100 that came in, ₱' + margin + ' was left for you.'); }
+  else if (T.profit === 0) { mood = 'think'; head = L('Saktong bawi lang — walang tubo, walang lugi.', 'Break-even — no profit, no loss.'); }
+  else { mood = 'sad'; head = L('Nalugi ka ng ' + money(-T.profit) + '.', 'You lost ' + money(-T.profit) + '.'); sub = L('Mas malaki ang lumabas na pera kaysa sa pumasok.', 'More money went out than came in.'); }
+  if (T.n) {
+    // compared with the period before
+    if (P.n) {
+      const d = T.profit - P.profit;
+      why.push(d >= 0 ? '📈 ' + L('Mas mataas ng ' + money(d) + ' ang tubo kumpara sa ' + R.prevTitle + '.', 'Profit is ' + money(d) + ' higher than ' + R.prevTitle + '.')
+        : '📉 ' + L('Mas mababa ng ' + money(-d) + ' ang tubo kumpara sa ' + R.prevTitle + '.', 'Profit is ' + money(-d) + ' lower than ' + R.prevTitle + '.'));
+      const now = catTotalsRange(R.from, R.to), before = catTotalsRange(R.pFrom, R.pTo);
+      const deltas = t => { const ks = new Set(Object.keys(now[t]).concat(Object.keys(before[t]))); return Array.from(ks).map(k => [k, (now[t][k] || 0) - (before[t][k] || 0)]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])); };
+      const di = deltas('in')[0], dout = deltas('out')[0];
+      if (di && Math.abs(di[1]) >= 1) why.push((di[1] < 0 ? '🔻 ' : '🔺 ') + L((di[1] < 0 ? 'Bumaba' : 'Tumaas') + ' ang kita mula sa ' + cn(di[0]) + ' ng ' + money(Math.abs(di[1])) + '.', 'Money in from ' + cn(di[0]) + ' went ' + (di[1] < 0 ? 'down' : 'up') + ' by ' + money(Math.abs(di[1])) + '.'));
+      if (dout && Math.abs(dout[1]) >= 1) why.push((dout[1] > 0 ? '🔺 ' : '🔻 ') + L((dout[1] > 0 ? 'Tumaas' : 'Bumaba') + ' ang gastos sa ' + cn(dout[0]) + ' ng ' + money(Math.abs(dout[1])) + '.', 'Spending on ' + cn(dout[0]) + ' went ' + (dout[1] > 0 ? 'up' : 'down') + ' by ' + money(Math.abs(dout[1])) + '.'));
+      if (T.profit < P.profit && di && di[1] < 0) tips.push(L('Alamin kung bakit bumaba ang ' + cn(di[0]) + ': kulang ba sa paninda, may kakumpitensya, o tumaas ang presyo?', 'Find out why ' + cn(di[0]) + ' dropped: out of stock, new competitor, or price went up?'));
+      if (dout && dout[1] > 0 && dout[1] > Math.abs(T.inn - P.inn)) tips.push(L('Bantayan ang gastos sa ' + cn(dout[0]) + ' — ito ang pinakamalaking nadagdag.', 'Watch your spending on ' + cn(dout[0]) + ' — it grew the most.'));
+    }
+    // biggest expense
+    const outs = Object.keys(D.catOut).map(k => [k, D.catOut[k].out]).sort((a, b) => b[1] - a[1]);
+    if (outs.length && T.out) {
+      const share = Math.round(outs[0][1] / T.out * 100);
+      why.push('🧡 ' + L('Pinakamalaking gastos: ' + cn(outs[0][0]) + ' (' + share + '% ng lahat ng gastos).', 'Biggest expense: ' + cn(outs[0][0]) + ' (' + share + '% of all expenses).'));
+      if (share >= 40) tips.push(L('Para sa ' + cn(outs[0][0]) + ': maghanap ng mas murang supplier, o bumili nang bultuhan para mas mura.', 'For ' + cn(outs[0][0]) + ': look for a cheaper supplier, or buy in bulk to save.'));
+    }
+    // best income source
+    const ins = Object.keys(D.catIn).map(k => [k, D.catIn[k].inn]).sort((a, b) => b[1] - a[1]);
+    if (ins.length > 1 && T.inn) why.push('💚 ' + L('Pinakamalaking pinagkakakitaan: ' + cn(ins[0][0]) + ' (' + Math.round(ins[0][1] / T.inn * 100) + '%).', 'Main source of money: ' + cn(ins[0][0]) + ' (' + Math.round(ins[0][1] / T.inn * 100) + '%).'));
+    // best weekday (needs at least ~2 weeks)
+    if (!R.isWeek) {
+      const wd = Array(7).fill(0), wn = Array(7).fill(0), seen = {};
+      D.ents.forEach(e => { if (e.type !== 'in') return; const i = (parseYmd(e.date).getDay() + 6) % 7; wd[i] += +e.amount; if (!seen[e.date]) { seen[e.date] = 1; wn[i]++; } });
+      if (Object.keys(seen).length >= 10) { let bi = 0; for (let i = 1; i < 7; i++) if (wn[i] && wd[i] / wn[i] > (wn[bi] ? wd[bi] / wn[bi] : 0)) bi = i; if (wn[bi]) { why.push('📅 ' + L('Pinakamalakas na araw: ' + WD_FULL()[bi] + ' (karaniwang ' + money(wd[bi] / wn[bi]) + ').', 'Strongest day: ' + WD_FULL()[bi] + ' (average ' + money(wd[bi] / wn[bi]) + ').')); tips.push(L('Siguraduhing puno ang paninda at bukas nang maaga tuwing ' + WD_FULL()[bi] + '.', 'Make sure you are fully stocked and open early every ' + WD_FULL()[bi] + '.')); } }
+    }
+    // how many days were recorded
+    const end = R.to < today() ? R.to : today();
+    if (end >= R.from) {
+      const span = Math.round((parseYmd(end) - parseYmd(R.from)) / 864e5) + 1, days = new Set(D.ents.map(e => e.date)).size;
+      if (span >= 5 && days / span < 0.5) { why.push('📝 ' + L('Nakapaglista ka lang sa ' + days + ' sa ' + span + ' araw — baka may kulang sa ulat.', 'You recorded on only ' + days + ' of ' + span + ' days — the report may be incomplete.')); tips.push(L('Maglista araw-araw, kahit 2 minuto bago magsara. Mas tama ang ulat, mas tama ang desisyon.', 'Record every day, even 2 minutes before closing. Better records, better decisions.')); }
+    }
+    // owner taking more than the business earns
+    if (D.EQ.take > 0 && D.EQ.take > Math.max(0, T.profit)) { why.push('👛 ' + L('Mas malaki ang kinuha mo para sa sarili (' + money(D.EQ.take) + ') kaysa sa tubo (' + money(Math.max(0, T.profit)) + ').', 'You took more for yourself (' + money(D.EQ.take) + ') than the profit (' + money(Math.max(0, T.profit)) + ').')); tips.push(L('Magtakda ng "sahod" para sa sarili na mas mababa sa karaniwang tubo, para hindi maubos ang puhunan.', 'Set yourself a fixed "salary" below your usual profit, so the capital does not run out.')); }
+    // money stuck in utang
+    const U = D.ut, late = U.owedLate.reduce((a, u) => a + nextAmt(u), 0);
+    if (late > 0) { why.push('⏰ ' + L('May ' + money(late) + ' na utang sa iyo na lampas na sa due date.', money(late) + ' owed to you is past due.')); tips.push(L('Singilin muna: ' + U.owedLate.slice(0, 3).map(u => u.name).join(', ') + '. Limitahan muna ang bagong pautang hangga\'t hindi bayad ang luma.', 'Collect first from: ' + U.owedLate.slice(0, 3).map(u => u.name).join(', ') + '. Hold new credit until old debts are paid.')); }
+    else if (U.owedLeft > 0 && T.inn && U.owedLeft > T.inn * 0.3) tips.push(L('Malaking pera (' + money(U.owedLeft) + ') ang nasa utang ng iba. Magtakda ng limit sa pautang kada tao.', 'A lot of money (' + money(U.owedLeft) + ') is in credit. Set a credit limit per person.'));
+    // thin margin / loss
+    if (T.profit < 0) { tips.unshift(L('I-check ang presyo mo gamit ang 🏷️ Presyo calculator — baka kulang ang patong sa puhunan.', 'Check your prices with the 🏷️ Price calculator — your markup may be too low.')); if (outs.length) tips.push(L('Bawasan muna ang hindi kailangang gastos, simula sa ' + cn(outs[0][0]) + '.', 'Cut non-essential spending first, starting with ' + cn(outs[0][0]) + '.')); }
+    else if (T.profit > 0 && margin < 15) tips.push(L('Maliit ang natitira sa bawat benta (' + margin + '%). Subukang itaas nang kaunti ang presyo ng mabentang paninda, o ibaba ang puhunan.', 'Only ' + margin + '% is left from each sale. Try a small price increase on best sellers, or lower your costs.'));
+    // keep it up
+    if (T.profit > 0) tips.push(L('Magtabi ng 10–20% ng tubo (' + money(T.profit * 0.1) + '–' + money(T.profit * 0.2) + ') bilang ipon o dagdag puhunan.', 'Set aside 10–20% of profit (' + money(T.profit * 0.1) + '–' + money(T.profit * 0.2) + ') as savings or extra capital.'));
+    if (D.noReceipt >= 3) tips.push(L('Kuhanan ng litrato ang resibo ng gastos — makakatulong sa buwis at sa pagbantay ng presyo ng supplier.', 'Snap photos of expense receipts — helps with taxes and tracking supplier prices.'));
+  }
+  const li = a => a.slice(0, 5).map(x => '<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-weight:700;font-size:14px;line-height:1.4">' + x + '</div>').join('');
+  return '<div class="card" style="border:3px solid ' + (T.profit > 0 ? 'var(--green)' : T.profit < 0 ? 'var(--rose)' : 'var(--sky2)') + '">' +
+    '<div style="display:flex;gap:10px;align-items:center"><div style="width:70px;flex:none">' + mascot(mood) + '</div><div><div class="small b muted">🐃 ' + L('Kwento ng ', 'The story of ') + R.title + '</div><div style="font-size:19px;font-weight:900;line-height:1.25">' + head + '</div>' + (sub ? '<div class="small b muted" style="margin-top:3px">' + sub + '</div>' : '') + '</div></div>' +
+    (why.length ? '<div class="b" style="margin:12px 0 2px">🔎 ' + L('Bakit?', 'Why?') + '</div>' + li(why) : '') +
+    (tips.length ? '<div class="b" style="margin:12px 0 2px">💡 ' + L('Mga mungkahi ni Kwento', "Kwento's tips") + '</div>' + li(tips.map(t => '• ' + t)) : '') + '</div>';
+}
 function viewReport() {
   if (!isOwner()) return '<h2>📊 ' + L('Ulat', 'Reports') + '</h2><div class="card empty"><div class="m">' + mascot('think') + '</div>🔒 ' + L('Ang Ulat ay para sa Owner lang.', 'Reports are for the owner only.') + '</div>';
   const D = reportData(), R = D.R, T = D.T;
@@ -1025,10 +1116,10 @@ function viewReport() {
     '<button class="btn soft noprint" data-act="assets" style="margin-top:10px">🏦 ' + (assetsList().length ? L('Ari-arian', 'Assets') + ' (' + assetsList().length + ')' : '＋ ' + L('Ilagay ang ari-arian', 'Add assets')) + '</button></div>';
   // bars
   const n = R.isYear ? 12 : R.lastDay, bi = Array(n).fill(0), bo = Array(n).fill(0);
-  D.ents.forEach(e => { const i = R.isYear ? +e.date.slice(5, 7) - 1 : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
+  D.ents.forEach(e => { const i = R.isYear ? +e.date.slice(5, 7) - 1 : R.isWeek ? Math.round((parseYmd(e.date) - parseYmd(R.from)) / 864e5) : +e.date.slice(8, 10) - 1; if (e.type === 'in') bi[i] += +e.amount; else bo[i] += +e.amount; });
   const mx = Math.max(1, ...bi, ...bo);
   const bars = '<div class="bars">' + bi.map((v, i) => '<div class="bar"><i class="in" style="height:' + (v / mx * 100) + '%"></i><i class="out" style="height:' + (bo[i] / mx * 100) + '%"></i></div>').join('') + '</div>' +
-    '<div class="barlbl">' + bi.map((v, i) => '<span>' + (R.isYear ? MONTHS[LANG][i].slice(0, 1) : ((i + 1) % 5 === 0 || i === 0 ? i + 1 : '')) + '</span>').join('') + '</div>' +
+    '<div class="barlbl">' + bi.map((v, i) => '<span>' + (R.isYear ? MONTHS[LANG][i].slice(0, 1) : R.isWeek ? WD()[i] : ((i + 1) % 5 === 0 || i === 0 ? i + 1 : '')) + '</span>').join('') + '</div>' +
     '<div class="legend"><span><i style="background:#7fd19a"></i>' + L('Kita', 'Money In') + '</span><span><i style="background:#ffb39a"></i>' + L('Gastos', 'Expenses') + '</span></div>';
   // P&L statement
   const catRows = (g, type) => Object.keys(g).sort((a, b) => (g[b].inn + g[b].out) - (g[a].inn + g[a].out)).map(k => { const c = catOf(k); return '<tr><td>' + c.i + ' ' + esc(catName(c)) + '</td><td class="r">' + money(type === 'in' ? g[k].inn : g[k].out) + '</td></tr>'; }).join('') || '<tr><td class="muted">' + L('Wala pa', 'None yet') + '</td><td></td></tr>';
@@ -1059,13 +1150,14 @@ function viewReport() {
     (U.owedLate.length ? '<div class="small b" style="margin-top:8px">' + L('Singilin', 'To collect') + ': ' + U.owedLate.map(u => esc(u.name) + ' ' + money(nextAmt(u))).join(' · ') + '</div>' : '') + '</div>' : '';
   return '<div class="printhead"><b style="font-size:20px">' + esc(S.settings.businessName) + '</b> — ' + L('Ulat', 'Report') + ': ' + R.title + '</div>' +
     '<h2 class="noprint">📊 ' + L('Ulat', 'Reports') + '</h2>' +
-    '<div class="seg noprint"><button class="' + (!R.isYear ? 'on n' : '') + '" data-act="repmode" data-arg="month">' + L('Buwanan', 'Monthly') + '</button><button class="' + (R.isYear ? 'on n' : '') + '" data-act="repmode" data-arg="year">' + L('Taunan', 'Yearly') + '</button></div>' +
+    '<div class="seg noprint"><button class="' + (R.isWeek ? 'on n' : '') + '" data-act="repmode" data-arg="week">' + L('Lingguhan', 'Weekly') + '</button><button class="' + (!R.isYear && !R.isWeek ? 'on n' : '') + '" data-act="repmode" data-arg="month">' + L('Buwanan', 'Monthly') + '</button><button class="' + (R.isYear ? 'on n' : '') + '" data-act="repmode" data-arg="year">' + L('Taunan', 'Yearly') + '</button></div>' +
     '<div class="pernav noprint"><button data-act="repnav" data-arg="-1">‹</button><b>' + R.title + '</b><button data-act="repnav" data-arg="1">›</button></div>' +
     // 1 summary
     '<div class="grid"><div class="stat s-in"><div class="lbl">💚 ' + L('Kita', 'Money In') + '</div><div><div class="amt">' + money(T.inn) + '</div>' + pctChange(T.inn, D.P.inn) + '</div></div>' +
     '<div class="stat s-out"><div class="lbl">🧡 ' + L('Gastos', 'Expenses') + '</div><div><div class="amt">' + money(T.out) + '</div>' + pctChange(T.out, D.P.out) + '</div></div>' +
     '<div class="stat s-profit big"><div class="lbl">🐃 ' + L('Tubo', 'Profit') + '</div><div class="amt" style="color:' + (T.profit >= 0 ? 'var(--green2)' : 'var(--pink)') + '">' + money(T.profit) + '</div><div class="sub">' + T.n + ' ' + L('listahan', 'records') + ' · ' + L('vs ' + R.prevTitle + ': ', 'vs ' + R.prevTitle + ': ') + money(D.P.profit) + ' ' + pctChange(T.profit, D.P.profit) + '</div></div></div>' +
     '<div class="cashbox"><div style="font-size:28px">💵</div><div><div class="lbl">' + L('Pera mo ngayon (tantiya)', 'Cash on hand now (estimate)') + '</div><div class="amt">' + money(cashOnHand()) + '</div></div></div>' +
+    insightCard(D) +
     // 2 trend
     '<div class="card"><div class="b">📈 ' + (R.isYear ? L('Kada buwan', 'By month') : L('Kada araw', 'By day')) + '</div>' + bars + '</div>' +
     // 3 P&L
@@ -1162,6 +1254,7 @@ const ACTIONS = {
   openUtang: id => openUtangDetail(S.utang.find(u => u.id === id)),
   repmode: a => { S.repMode = a; render(); },
   repnav: a => {
+    if (S.repMode === 'week') { reportRange(); S.repWeek = addDays_(S.repWeek, 7 * (+a)); render(); return; }
     const y = +S.repMonth.slice(0, 4), m = +S.repMonth.slice(5, 7);
     const d = S.repMode === 'year' ? new Date(y + (+a), m - 1, 1) : new Date(y, m - 1 + (+a), 1);
     S.repMonth = d.getFullYear() + '-' + pad(d.getMonth() + 1); render();

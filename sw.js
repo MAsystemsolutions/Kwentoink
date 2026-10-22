@@ -1,7 +1,7 @@
 /* Kwentoink offline helper.
    Keeps the app saved on the phone so it opens instantly and works without internet.
-   When you upload a new index.html, change the version number below (v5 → v6) so phones update. */
-const CACHE = 'kwentoink-v5';
+   When you upload a new index.html, change the version number below (v7 → v8) so phones update. */
+const CACHE = 'kwentoink-v7';
 const FILES = ['./', './index.html', './manifest.json', './logo.png'];
 
 self.addEventListener('install', e => {
@@ -10,7 +10,7 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k.indexOf('kwentoink-') === 0 && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
